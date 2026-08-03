@@ -16,6 +16,19 @@ const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+const storeRefreshToken = async (userId, refreshToken) => {
+  const hashedRefreshToken = hashToken(refreshToken);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { refreshTokenHash: hashedRefreshToken }
+  });
+};
+
+const clearRefreshSession = (res) => {
+  res.clearCookie('refreshToken', cookieOptions);
+};
+
 // Cookie configuration helper
 const cookieOptions = {
   httpOnly: true,
@@ -49,14 +62,8 @@ export const login = async (req, res, next) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    // Save hashed refresh token to database
-    const hashedRefreshToken = hashToken(refreshToken);
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshTokenHash: hashedRefreshToken }
-    });
+    await storeRefreshToken(user.id, refreshToken);
 
-    // Send HTTP-Only Cookie containing refresh token
     res.cookie('refreshToken', refreshToken, cookieOptions);
 
     // Filter out password hash and return payload
@@ -105,7 +112,7 @@ export const refresh = async (req, res, next) => {
         where: { id: user.id },
         data: { refreshTokenHash: null }
       });
-      res.clearCookie('refreshToken', cookieOptions);
+      clearRefreshSession(res);
       return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Security violation: Refresh token already used. Please login again.'));
     }
 
@@ -113,11 +120,7 @@ export const refresh = async (req, res, next) => {
     const newAccessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
 
-    const newHashedRefreshToken = hashToken(newRefreshToken);
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshTokenHash: newHashedRefreshToken }
-    });
+    await storeRefreshToken(user.id, newRefreshToken);
 
     res.cookie('refreshToken', newRefreshToken, cookieOptions);
 
@@ -142,7 +145,7 @@ export const logout = async (req, res, next) => {
       data: { refreshTokenHash: null }
     });
 
-    res.clearCookie('refreshToken', cookieOptions);
+    clearRefreshSession(res);
 
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Logout successful')
@@ -190,7 +193,7 @@ export const changePassword = async (req, res, next) => {
       }
     });
 
-    res.clearCookie('refreshToken', cookieOptions);
+    clearRefreshSession(res);
 
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Password updated successfully. Please login again.')

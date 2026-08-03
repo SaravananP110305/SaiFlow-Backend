@@ -5,6 +5,7 @@ import ApiError from '../utils/ApiError.js';
 
 export const errorHandler = (err, req, res, next) => {
   let { statusCode, message } = err;
+  const shouldExposeStack = env.isDevelopment && !env.isProduction;
 
   // If error is not an instance of ApiError, classify it
   if (!(err instanceof ApiError)) {
@@ -16,7 +17,7 @@ export const errorHandler = (err, req, res, next) => {
     success: false,
     statusCode,
     message,
-    ...(env.isDevelopment && { stack: err.stack })
+    ...(shouldExposeStack && { stack: err.stack })
   };
 
   if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {

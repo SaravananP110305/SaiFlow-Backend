@@ -7,11 +7,13 @@ export const loginSchema = Joi.object({
     .lowercase()
     .messages({
       'string.email': 'Please provide a valid email address',
+      'string.empty': 'Email is required',
       'any.required': 'Email is required'
     }),
   password: Joi.string()
     .required()
     .messages({
+      'string.empty': 'Password is required',
       'any.required': 'Password is required'
     })
 });
@@ -20,6 +22,7 @@ export const changePasswordSchema = Joi.object({
   oldPassword: Joi.string()
     .required()
     .messages({
+      'string.empty': 'Old password is required',
       'any.required': 'Old password is required'
     }),
   newPassword: Joi.string()
@@ -27,6 +30,7 @@ export const changePasswordSchema = Joi.object({
     .required()
     .messages({
       'string.min': 'New password must be at least 6 characters long',
+      'string.empty': 'New password is required',
       'any.required': 'New password is required'
     })
 });
