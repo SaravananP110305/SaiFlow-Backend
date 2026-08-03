@@ -18,7 +18,14 @@ app.use(helmet());
 
 // Enable CORS
 app.use(cors({
-  origin: env.corsOrigin,
+  origin(origin, callback) {
+    // Allow requests with no origin (e.g., curl, Postman, mobile apps)
+    if (!origin || env.corsOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   credentials: true
 }));
 
