@@ -1,11 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '../utils/ApiError.js';
 
-export const validate = (schema) => {
+export const validate = (schema, options = {}) => {
   return (req, res, next) => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
-      stripUnknown: true
+      stripUnknown: true,
+      ...options
     });
 
     if (error) {

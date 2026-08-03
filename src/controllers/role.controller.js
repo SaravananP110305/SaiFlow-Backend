@@ -145,6 +145,10 @@ export const updateRole = async (req, res, next) => {
     }
 
     if (name && name !== existingRole.name) {
+      if (existingRole.isSystem) {
+        return next(new ApiError(StatusCodes.FORBIDDEN, 'System role names cannot be modified'));
+      }
+
       const duplicate = await prisma.role.findFirst({
         where: { name, id: { not: roleId }, deletedAt: null }
       });

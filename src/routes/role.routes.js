@@ -17,8 +17,8 @@ router.use(isAuthenticated);
 
 router.get('/', requirePermission('roles', 'view'), getRoles);
 router.get('/:id', requirePermission('roles', 'view'), getRoleById);
-router.post('/', requirePermission('roles', 'create'), validate(createRoleSchema), createRole);
-router.put('/:id', requirePermission('roles', 'edit'), validate(updateRoleSchema), updateRole);
+router.post('/', requirePermission('roles', 'create'), validate(createRoleSchema, { stripUnknown: false }), createRole);
+router.put('/:id', requirePermission('roles', 'edit'), validate(updateRoleSchema, { stripUnknown: false }), updateRole);
 router.delete('/:id', requirePermission('roles', 'delete'), deleteRole);
 
 export default router;

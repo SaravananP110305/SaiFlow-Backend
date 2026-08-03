@@ -172,6 +172,15 @@ export const updateUser = async (req, res, next) => {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'User not found'));
     }
 
+    if (
+      req.user.id === userId &&
+      status &&
+      existingUser.status === 'ACTIVE' &&
+      ['INACTIVE', 'SUSPENDED'].includes(status)
+    ) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'You cannot deactivate your own account.'));
+    }
+
     if (email && email !== existingUser.email) {
       const duplicate = await prisma.user.findFirst({
         where: { email, id: { not: userId } }
