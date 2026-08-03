@@ -20,7 +20,9 @@ async function main() {
         meetings: ['view', 'create', 'edit', 'delete'],
         proposals: ['view', 'create', 'edit', 'delete', 'approve'],
         clients: ['view', 'create', 'edit', 'delete', 'approve'],
-        reports: ['view']
+        reports: ['view'],
+        connect: ['view', 'create', 'edit', 'delete'],
+        settings: ['view', 'edit']
       }
     },
     {
@@ -34,7 +36,9 @@ async function main() {
         meetings: ['view', 'create', 'edit'],
         proposals: ['view', 'create', 'edit', 'approve'],
         clients: ['view', 'create', 'edit', 'approve'],
-        reports: ['view']
+        reports: ['view'],
+        connect: ['view', 'create', 'edit'],
+        settings: ['view']
       }
     },
     {
@@ -48,7 +52,9 @@ async function main() {
         meetings: ['view', 'create', 'edit'],
         proposals: ['view', 'create', 'edit'],
         clients: ['view'],
-        reports: []
+        reports: [],
+        connect: ['view', 'create', 'edit'],
+        settings: ['view']
       }
     },
     {
@@ -62,7 +68,9 @@ async function main() {
         meetings: ['view'],
         proposals: ['view', 'create', 'edit'],
         clients: ['view'],
-        reports: []
+        reports: [],
+        connect: ['view'],
+        settings: ['view']
       }
     }
   ];

@@ -91,6 +91,23 @@ export const createProposal = async (req, res, next) => {
       return next(new ApiError(StatusCodes.CONFLICT, `Proposal number '${proposalNumber}' already exists`));
     }
 
+    // Check if status is Accepted, Approved, or Won
+    const isApprovedStatus = (s) => s && ['accepted', 'approved', 'won'].includes(s.toLowerCase());
+    if (isApprovedStatus(status)) {
+      if (req.user.role.name !== 'Administrator') {
+        const permissions = req.user.role.permissions || {};
+        const moduleActions = permissions.proposals || [];
+        if (!moduleActions.includes('approve')) {
+          return next(
+            new ApiError(
+              StatusCodes.FORBIDDEN,
+              "Permission denied: Requires 'approve' right on module 'proposals'"
+            )
+          );
+        }
+      }
+    }
+
     const [proposal] = await prisma.$transaction([
       prisma.proposal.create({
         data: {
@@ -132,6 +149,25 @@ export const updateProposal = async (req, res, next) => {
     }
 
     const { proposalNumber, title, amount, status, documentUrl, validUntil } = req.body;
+
+    // Check if status is transitioning to Accepted, Approved, or Won
+    const isApprovedStatus = (s) => s && ['accepted', 'approved', 'won'].includes(s.toLowerCase());
+    const isChangingToApproved = isApprovedStatus(status) && existing.status !== status;
+
+    if (isChangingToApproved) {
+      if (req.user.role.name !== 'Administrator') {
+        const permissions = req.user.role.permissions || {};
+        const moduleActions = permissions.proposals || [];
+        if (!moduleActions.includes('approve')) {
+          return next(
+            new ApiError(
+              StatusCodes.FORBIDDEN,
+              "Permission denied: Requires 'approve' right on module 'proposals'"
+            )
+          );
+        }
+      }
+    }
 
     if (proposalNumber && proposalNumber !== existing.proposalNumber) {
       const duplicate = await prisma.proposal.findUnique({ where: { proposalNumber } });
