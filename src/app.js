@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import hpp from 'hpp';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import logger from './config/logger.js';
 import routes from './routes/index.js';
@@ -20,6 +21,9 @@ app.use(cors({
   origin: env.corsOrigin,
   credentials: true
 }));
+
+// Cookie Parser
+app.use(cookieParser());
 
 // Rate Limiting
 app.use('/api', rateLimiter);
@@ -40,6 +44,11 @@ app.use(morgan(morganFormat, {
     write: (message) => logger.info(message.trim())
   }
 }));
+
+// Base Root Redirect to Health Check
+app.get('/', (req, res) => {
+  res.redirect('/api/v1/health');
+});
 
 // API Routes mounting
 app.use('/api/v1', routes);

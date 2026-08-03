@@ -1,0 +1,177 @@
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('🌱 Starting database seeding...');
+
+  // 1. Seed Roles
+  console.log('Seeding roles...');
+  const roles = [
+    {
+      name: 'Administrator',
+      description: 'System Administrator with full access rights',
+      isSystem: true,
+      permissions: {
+        users: ['view', 'create', 'edit', 'delete'],
+        roles: ['view', 'create', 'edit', 'delete'],
+        leads: ['view', 'create', 'edit', 'delete', 'export', 'assign'],
+        meetings: ['view', 'create', 'edit', 'delete'],
+        proposals: ['view', 'create', 'edit', 'delete', 'approve'],
+        clients: ['view', 'create', 'edit', 'delete', 'approve'],
+        reports: ['view']
+      }
+    },
+    {
+      name: 'Business Development Manager',
+      description: 'Manager overseeing BDE pipeline and operations',
+      isSystem: true,
+      permissions: {
+        users: ['view'],
+        roles: ['view'],
+        leads: ['view', 'create', 'edit', 'export', 'assign'],
+        meetings: ['view', 'create', 'edit'],
+        proposals: ['view', 'create', 'edit', 'approve'],
+        clients: ['view', 'create', 'edit', 'approve'],
+        reports: ['view']
+      }
+    },
+    {
+      name: 'Business Development Executive',
+      description: 'Executive managing assigned leads and appointments',
+      isSystem: true,
+      permissions: {
+        users: [],
+        roles: [],
+        leads: ['view', 'create', 'edit'],
+        meetings: ['view', 'create', 'edit'],
+        proposals: ['view', 'create', 'edit'],
+        clients: ['view'],
+        reports: []
+      }
+    },
+    {
+      name: 'Presales Consultant',
+      description: 'Solution Architect managing technical evaluations',
+      isSystem: true,
+      permissions: {
+        users: [],
+        roles: [],
+        leads: ['view'],
+        meetings: ['view'],
+        proposals: ['view', 'create', 'edit'],
+        clients: ['view'],
+        reports: []
+      }
+    }
+  ];
+
+  const dbRoles = {};
+  for (const role of roles) {
+    const createdRole = await prisma.role.upsert({
+      where: { name: role.name },
+      update: {
+        description: role.description,
+        permissions: role.permissions,
+        isSystem: role.isSystem
+      },
+      create: role
+    });
+    dbRoles[role.name] = createdRole;
+    console.log(`Role [${role.name}] seeded.`);
+  }
+
+  // 2. Seed Admin User
+  console.log('Seeding default administrator...');
+  const adminEmail = 'admin@saiflow.com';
+  const hashedPassword = await bcrypt.hash('Admin@12345', 12);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      passwordHash: hashedPassword,
+      roleId: dbRoles['Administrator'].id,
+      status: 'ACTIVE'
+    },
+    create: {
+      firstName: 'System',
+      lastName: 'Administrator',
+      email: adminEmail,
+      passwordHash: hashedPassword,
+      phone: '9876543210',
+      roleId: dbRoles['Administrator'].id,
+      status: 'ACTIVE'
+    }
+  });
+  console.log(`Default administrator (${adminEmail}) seeded.`);
+
+  // 3. Seed Master Data
+  console.log('Seeding Master Data items...');
+
+  // Lead Sources
+  const leadSources = ['Website', 'Referral', 'Cold Call', 'LinkedIn', 'Email Campaign', 'Trade Show'];
+  for (const name of leadSources) {
+    await prisma.masterItem.createMany({
+      data: [{ category: 'LEAD_SOURCE', name, status: 'Active' }],
+      skipDuplicates: true
+    });
+  }
+  console.log('Lead sources seeded.');
+
+  // Priorities
+  const priorities = ['Low', 'Medium', 'High', 'Urgent'];
+  for (const name of priorities) {
+    await prisma.masterItem.createMany({
+      data: [{ category: 'PRIORITY', name, status: 'Active' }],
+      skipDuplicates: true
+    });
+  }
+  console.log('Priorities seeded.');
+
+  // Countries
+  const countries = ['India', 'United States', 'United Kingdom', 'Canada', 'Australia'];
+  for (const name of countries) {
+    await prisma.masterItem.createMany({
+      data: [{ category: 'COUNTRY', name, status: 'Active' }],
+      skipDuplicates: true
+    });
+  }
+  console.log('Countries seeded.');
+
+  // States (linking to Country parent if exists)
+  const india = await prisma.masterItem.findFirst({ where: { category: 'COUNTRY', name: 'India' } });
+  if (india) {
+    const states = ['Karnataka', 'Maharashtra', 'Tamil Nadu', 'Telangana', 'Delhi'];
+    for (const name of states) {
+      await prisma.masterItem.createMany({
+        data: [{ category: 'STATE', name, parentId: india.id, status: 'Active' }],
+        skipDuplicates: true
+      });
+    }
+    console.log('States for India seeded.');
+  }
+
+  const us = await prisma.masterItem.findFirst({ where: { category: 'COUNTRY', name: 'United States' } });
+  if (us) {
+    const states = ['California', 'New York', 'Texas', 'Washington', 'Illinois'];
+    for (const name of states) {
+      await prisma.masterItem.createMany({
+        data: [{ category: 'STATE', name, parentId: us.id, status: 'Active' }],
+        skipDuplicates: true
+      });
+    }
+    console.log('States for USA seeded.');
+  }
+
+  console.log('🏁 Seeding completed successfully!');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
