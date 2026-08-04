@@ -43,7 +43,7 @@ export const getUsers = async (req, res, next) => {
             select: {
               id: true,
               name: true,
-              description: true
+              status: true
             }
           }
         },

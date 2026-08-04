@@ -12,7 +12,7 @@ export const getRoles = async (req, res, next) => {
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } }
+          { status: { contains: search, mode: 'insensitive' } }
         ]
       })
     };
@@ -104,24 +104,35 @@ export const getRoleById = async (req, res, next) => {
 
 export const createRole = async (req, res, next) => {
   try {
-    const { name, description, permissions } = req.body;
+    const { name, permissions } = req.body;
 
     const existing = await prisma.role.findFirst({
-      where: { name, deletedAt: null }
+      where: { name }
     });
 
-    if (existing) {
+    if (existing && !existing.deletedAt) {
       return next(new ApiError(StatusCodes.CONFLICT, `Role with name '${name}' already exists`));
     }
 
-    const role = await prisma.role.create({
-      data: {
-        name,
-        description,
-        permissions: permissions || {},
-        isSystem: false
-      }
-    });
+    let role;
+    if (existing) {
+      role = await prisma.role.update({
+        where: { id: existing.id },
+        data: {
+          permissions: permissions || {},
+          status: 'Active',
+          deletedAt: null
+        }
+      });
+    } else {
+      role = await prisma.role.create({
+        data: {
+          name,
+          permissions: permissions || {},
+          status: 'Active'
+        }
+      });
+    }
 
     res.status(StatusCodes.CREATED).json(
       new ApiResponse(StatusCodes.CREATED, 'Role created successfully', role)
@@ -134,7 +145,7 @@ export const createRole = async (req, res, next) => {
 export const updateRole = async (req, res, next) => {
   try {
     const roleId = parseInt(req.params.id, 10);
-    const { name, description, permissions } = req.body;
+    const { name, status, permissions } = req.body;
 
     const existingRole = await prisma.role.findFirst({
       where: { id: roleId, deletedAt: null }
@@ -145,12 +156,8 @@ export const updateRole = async (req, res, next) => {
     }
 
     if (name && name !== existingRole.name) {
-      if (existingRole.isSystem) {
-        return next(new ApiError(StatusCodes.FORBIDDEN, 'System role names cannot be modified'));
-      }
-
       const duplicate = await prisma.role.findFirst({
-        where: { name, id: { not: roleId }, deletedAt: null }
+        where: { name, id: { not: roleId } }
       });
       if (duplicate) {
         return next(new ApiError(StatusCodes.CONFLICT, `Role with name '${name}' already exists`));
@@ -161,7 +168,7 @@ export const updateRole = async (req, res, next) => {
       where: { id: roleId },
       data: {
         ...(name && { name }),
-        ...(description !== undefined && { description }),
+        ...(status !== undefined && { status }),
         ...(permissions !== undefined && { permissions })
       }
     });
@@ -189,10 +196,6 @@ export const deleteRole = async (req, res, next) => {
 
     if (!role) {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Role not found'));
-    }
-
-    if (role.isSystem) {
-      return next(new ApiError(StatusCodes.FORBIDDEN, 'System roles cannot be deleted'));
     }
 
     if (role._count.users > 0) {

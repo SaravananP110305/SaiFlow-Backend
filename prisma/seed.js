@@ -11,8 +11,7 @@ async function main() {
   const roles = [
     {
       name: 'Administrator',
-      description: 'System Administrator with full access rights',
-      isSystem: true,
+      status: 'Active',
       permissions: {
         users: ['view', 'create', 'edit', 'delete'],
         roles: ['view', 'create', 'edit', 'delete'],
@@ -27,8 +26,7 @@ async function main() {
     },
     {
       name: 'Business Development Manager',
-      description: 'Manager overseeing BDE pipeline and operations',
-      isSystem: true,
+      status: 'Active',
       permissions: {
         users: ['view'],
         roles: ['view'],
@@ -43,8 +41,7 @@ async function main() {
     },
     {
       name: 'Business Development Executive',
-      description: 'Executive managing assigned leads and appointments',
-      isSystem: true,
+      status: 'Active',
       permissions: {
         users: [],
         roles: [],
@@ -59,8 +56,7 @@ async function main() {
     },
     {
       name: 'Presales Consultant',
-      description: 'Solution Architect managing technical evaluations',
-      isSystem: true,
+      status: 'Active',
       permissions: {
         users: [],
         roles: [],
@@ -80,9 +76,8 @@ async function main() {
     const createdRole = await prisma.role.upsert({
       where: { name: role.name },
       update: {
-        description: role.description,
-        permissions: role.permissions,
-        isSystem: role.isSystem
+        status: role.status,
+        permissions: role.permissions
       },
       create: role
     });

@@ -9,8 +9,13 @@ export const errorHandler = (err, req, res, next) => {
 
   // If error is not an instance of ApiError, classify it
   if (!(err instanceof ApiError)) {
-    statusCode = statusCode || err.status || StatusCodes.INTERNAL_SERVER_ERROR;
-    message = message || err.message || 'Internal Server Error';
+    if (err?.code === 'P2002') {
+      statusCode = StatusCodes.CONFLICT;
+      message = 'A record with the same unique value already exists.';
+    } else {
+      statusCode = statusCode || err.status || StatusCodes.INTERNAL_SERVER_ERROR;
+      message = message || err.message || 'Internal Server Error';
+    }
   }
 
   const response = {

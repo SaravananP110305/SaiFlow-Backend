@@ -24,8 +24,7 @@ const buildUserPayload = (user) => {
     ? {
         id: role.id,
         name: role.name,
-        description: role.description,
-        isSystem: role.isSystem
+        status: role.status
       }
     : null;
 
@@ -191,7 +190,7 @@ export const getPrivileges = async (req, res, next) => {
         role: {
           id: role.id,
           name: role.name,
-          isSystem: role.isSystem
+          status: role.status
         },
         permissions: role.permissions || {}
       })

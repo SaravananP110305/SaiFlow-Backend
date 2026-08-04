@@ -16,12 +16,12 @@ export const createRoleSchema = Joi.object({
     'string.min': 'Role name must be at least 2 characters',
     'any.required': 'Role name is required'
   }),
-  description: Joi.string().max(500).allow('', null),
+  status: Joi.string().valid('Active', 'Inactive'),
   permissions: permissionsSchema.default({})
 });
 
 export const updateRoleSchema = Joi.object({
   name: Joi.string().min(2).max(100),
-  description: Joi.string().max(500).allow('', null),
+  status: Joi.string().valid('Active', 'Inactive'),
   permissions: permissionsSchema
 });
