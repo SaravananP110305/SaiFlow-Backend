@@ -32,7 +32,7 @@ export const getProposals = async (req, res, next) => {
         where,
         include: {
           lead: { select: { id: true, title: true, contactPerson: true, email: true, status: true } },
-          createdBy: { select: { id: true, firstName: true, lastName: true, email: true } }
+          createdBy: { select: { id: true, name: true, email: true } }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -60,7 +60,7 @@ export const getProposalById = async (req, res, next) => {
       where: { id },
       include: {
         lead: true,
-        createdBy: { select: { id: true, firstName: true, lastName: true, email: true } }
+        createdBy: { select: { id: true, name: true, email: true } }
       }
     });
 
@@ -122,7 +122,7 @@ export const createProposal = async (req, res, next) => {
         },
         include: {
           lead: { select: { id: true, title: true } },
-          createdBy: { select: { id: true, firstName: true, lastName: true } }
+          createdBy: { select: { id: true, name: true } }
         }
       }),
       prisma.lead.update({

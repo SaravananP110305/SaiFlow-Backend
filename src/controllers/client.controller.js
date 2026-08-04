@@ -28,7 +28,7 @@ export const getClients = async (req, res, next) => {
           lead: { select: { id: true, title: true, status: true, budget: true } },
           projects: {
             include: {
-              pm: { select: { id: true, firstName: true, lastName: true, email: true } }
+              pm: { select: { id: true, name: true, email: true } }
             }
           }
         },
@@ -61,7 +61,7 @@ export const getClientById = async (req, res, next) => {
         lead: true,
         projects: {
           include: {
-            pm: { select: { id: true, firstName: true, lastName: true, email: true } }
+            pm: { select: { id: true, name: true, email: true } }
           }
         }
       }
@@ -195,7 +195,7 @@ export const getProjects = async (req, res, next) => {
         where,
         include: {
           client: { include: { company: true } },
-          pm: { select: { id: true, firstName: true, lastName: true, email: true } }
+          pm: { select: { id: true, name: true, email: true } }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -243,7 +243,7 @@ export const createProject = async (req, res, next) => {
       },
       include: {
         client: { include: { company: true } },
-        pm: { select: { id: true, firstName: true, lastName: true, email: true } }
+        pm: { select: { id: true, name: true, email: true } }
       }
     });
 
@@ -276,7 +276,7 @@ export const updateProject = async (req, res, next) => {
       },
       include: {
         client: { include: { company: true } },
-        pm: { select: { id: true, firstName: true, lastName: true, email: true } }
+        pm: { select: { id: true, name: true, email: true } }
       }
     });
 

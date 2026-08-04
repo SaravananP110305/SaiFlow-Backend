@@ -39,7 +39,7 @@ export const getMeetings = async (req, res, next) => {
             select: { id: true, title: true, contactPerson: true, email: true, status: true }
           },
           createdBy: {
-            select: { id: true, firstName: true, lastName: true, email: true }
+            select: { id: true, name: true, email: true }
           }
         },
         orderBy: { scheduledAt: 'asc' },
@@ -69,7 +69,7 @@ export const getMeetingById = async (req, res, next) => {
       include: {
         lead: true,
         createdBy: {
-          select: { id: true, firstName: true, lastName: true, email: true }
+          select: { id: true, name: true, email: true }
         }
       }
     });
@@ -112,7 +112,7 @@ export const createMeeting = async (req, res, next) => {
         },
         include: {
           lead: { select: { id: true, title: true, contactPerson: true } },
-          createdBy: { select: { id: true, firstName: true, lastName: true } }
+          createdBy: { select: { id: true, name: true } }
         }
       }),
       prisma.lead.update({

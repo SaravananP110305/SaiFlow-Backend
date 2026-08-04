@@ -18,8 +18,7 @@ export const getUsers = async (req, res, next) => {
       ...(roleId && { roleId: parseInt(roleId, 10) }),
       ...(search && {
         OR: [
-          { firstName: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } }
         ]
       })
@@ -31,10 +30,10 @@ export const getUsers = async (req, res, next) => {
         where,
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
           phone: true,
+          department: true,
           status: true,
           roleId: true,
           createdAt: true,
@@ -80,10 +79,10 @@ export const getUserById = async (req, res, next) => {
       where: { id: userId, deletedAt: null },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
+        name: true,
         email: true,
         phone: true,
+        department: true,
         status: true,
         roleId: true,
         createdAt: true,
@@ -106,7 +105,7 @@ export const getUserById = async (req, res, next) => {
 
 export const createUser = async (req, res, next) => {
   try {
-    const { firstName, lastName, email, password, phone, roleId, status } = req.body;
+    const { name, email, password, phone, department, roleId, status } = req.body;
 
     const existingUser = await prisma.user.findUnique({
       where: { email }
@@ -128,20 +127,20 @@ export const createUser = async (req, res, next) => {
 
     const newUser = await prisma.user.create({
       data: {
-        firstName,
-        lastName,
+        name,
         email,
         passwordHash: hashedPassword,
         phone,
+        department,
         roleId,
         status: status || 'ACTIVE'
       },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
+        name: true,
         email: true,
         phone: true,
+        department: true,
         status: true,
         roleId: true,
         createdAt: true,
@@ -162,7 +161,7 @@ export const createUser = async (req, res, next) => {
 export const updateUser = async (req, res, next) => {
   try {
     const userId = parseInt(req.params.id, 10);
-    const { firstName, lastName, email, phone, roleId, status } = req.body;
+    const { name, email, phone, department, roleId, status } = req.body;
 
     const existingUser = await prisma.user.findFirst({
       where: { id: userId, deletedAt: null }
@@ -202,19 +201,19 @@ export const updateUser = async (req, res, next) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        ...(firstName && { firstName }),
-        ...(lastName && { lastName }),
+        ...(name && { name }),
         ...(email && { email }),
         ...(phone !== undefined && { phone }),
+        ...(department !== undefined && { department }),
         ...(roleId && { roleId }),
         ...(status && { status })
       },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
+        name: true,
         email: true,
         phone: true,
+        department: true,
         status: true,
         roleId: true,
         updatedAt: true,
@@ -275,10 +274,9 @@ export const getAssignees = async (req, res, next) => {
       },
       select: {
         id: true,
-        firstName: true,
-        lastName: true
+        name: true
       },
-      orderBy: { firstName: 'asc' }
+      orderBy: { name: 'asc' }
     });
 
     res.status(StatusCodes.OK).json(

@@ -98,8 +98,7 @@ async function main() {
       status: 'ACTIVE'
     },
     create: {
-      firstName: 'System',
-      lastName: 'Administrator',
+      name: 'System Administrator',
       email: adminEmail,
       passwordHash: hashedPassword,
       phone: '9876543210',

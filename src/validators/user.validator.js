@@ -1,11 +1,8 @@
 import Joi from 'joi';
 
 export const createUserSchema = Joi.object({
-  firstName: Joi.string().min(2).max(100).required().messages({
-    'any.required': 'First name is required'
-  }),
-  lastName: Joi.string().max(100).allow('').required().messages({
-    'any.required': 'Last name is required'
+  name: Joi.string().min(2).max(200).required().messages({
+    'any.required': 'Name is required'
   }),
   email: Joi.string().email().required().lowercase().messages({
     'string.email': 'Valid email is required',
@@ -16,6 +13,7 @@ export const createUserSchema = Joi.object({
     'any.required': 'Password is required'
   }),
   phone: Joi.string().max(20).allow('', null),
+  department: Joi.string().max(100).allow('', null),
   roleId: Joi.number().integer().positive().required().messages({
     'any.required': 'Role ID is required'
   }),
@@ -23,10 +21,10 @@ export const createUserSchema = Joi.object({
 });
 
 export const updateUserSchema = Joi.object({
-  firstName: Joi.string().min(2).max(100),
-  lastName: Joi.string().max(100).allow(''),
+  name: Joi.string().min(2).max(200),
   email: Joi.string().email().lowercase(),
   phone: Joi.string().max(20).allow('', null),
+  department: Joi.string().max(100).allow('', null),
   roleId: Joi.number().integer().positive(),
   status: Joi.string().valid('ACTIVE', 'INACTIVE', 'SUSPENDED')
 });

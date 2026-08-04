@@ -35,7 +35,7 @@ export const getLeads = async (req, res, next) => {
           company: { select: { id: true, name: true } },
           source: { select: { id: true, name: true } },
           priority: { select: { id: true, name: true } },
-          assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
           _count: { select: { meetings: true, proposals: true } }
         },
         orderBy: { createdAt: 'desc' },
@@ -67,7 +67,7 @@ export const getLeadById = async (req, res, next) => {
         source: true,
         priority: true,
         assignedTo: {
-          select: { id: true, firstName: true, lastName: true, email: true, phone: true }
+          select: { id: true, name: true, email: true, phone: true }
         },
         meetings: {
           orderBy: { scheduledAt: 'desc' }
@@ -136,7 +136,7 @@ export const createLead = async (req, res, next) => {
         company: true,
         source: true,
         priority: true,
-        assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } }
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     });
 
@@ -192,7 +192,7 @@ export const updateLead = async (req, res, next) => {
         company: true,
         source: true,
         priority: true,
-        assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } }
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     });
 
@@ -228,12 +228,12 @@ export const assignLead = async (req, res, next) => {
         status: newStatus
       },
       include: {
-        assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } }
+        assignedTo: { select: { id: true, name: true, email: true } }
       }
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, `Lead assigned to ${user.firstName} ${user.lastName} successfully`, updated)
+      new ApiResponse(StatusCodes.OK, `Lead assigned to ${user.name} successfully`, updated)
     );
   } catch (error) {
     next(error);

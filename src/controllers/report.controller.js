@@ -93,8 +93,7 @@ export const getEmployeeReport = async (req, res, next) => {
       where: { deletedAt: null, status: 'ACTIVE' },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
+        name: true,
         email: true,
         role: { select: { name: true } },
         _count: {
