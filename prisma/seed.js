@@ -19,6 +19,7 @@ async function main() {
         meetings: ['view', 'create', 'edit', 'delete'],
         proposals: ['view', 'create', 'edit', 'delete', 'approve'],
         clients: ['view', 'create', 'edit', 'delete', 'approve'],
+        companies: ['view', 'create', 'edit', 'delete'],
         reports: ['view'],
         connect: ['view', 'create', 'edit', 'delete'],
         settings: ['view', 'edit']
@@ -34,6 +35,7 @@ async function main() {
         meetings: ['view', 'create', 'edit'],
         proposals: ['view', 'create', 'edit', 'approve'],
         clients: ['view', 'create', 'edit', 'approve'],
+        companies: ['view', 'create', 'edit', 'delete'],
         reports: ['view'],
         connect: ['view', 'create', 'edit'],
         settings: ['view']
@@ -49,6 +51,7 @@ async function main() {
         meetings: ['view', 'create', 'edit'],
         proposals: ['view', 'create', 'edit'],
         clients: ['view'],
+        companies: ['view', 'create', 'edit'],
         reports: [],
         connect: ['view', 'create', 'edit'],
         settings: ['view']
@@ -64,6 +67,7 @@ async function main() {
         meetings: ['view'],
         proposals: ['view', 'create', 'edit'],
         clients: ['view'],
+        companies: ['view'],
         reports: [],
         connect: ['view'],
         settings: ['view']

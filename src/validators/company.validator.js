@@ -8,6 +8,8 @@ export const createCompanySchema = Joi.object({
     'string.uri': 'Website must be a valid URL'
   }),
   address: Joi.string().allow('', null),
+  pincode: Joi.string().max(20).allow('', null),
+  companyType: Joi.string().max(100).allow('', null),
   industryId: Joi.number().integer().positive().allow(null),
   countryId: Joi.number().integer().positive().allow(null),
   stateId: Joi.number().integer().positive().allow(null),
@@ -18,6 +20,8 @@ export const updateCompanySchema = Joi.object({
   name: Joi.string().min(2).max(255),
   website: Joi.string().uri().allow('', null),
   address: Joi.string().allow('', null),
+  pincode: Joi.string().max(20).allow('', null),
+  companyType: Joi.string().max(100).allow('', null),
   industryId: Joi.number().integer().positive().allow(null),
   countryId: Joi.number().integer().positive().allow(null),
   stateId: Joi.number().integer().positive().allow(null),

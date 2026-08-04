@@ -63,12 +63,15 @@ model User {
   updatedAt        DateTime     @updatedAt @map("updated_at")
   deletedAt        DateTime?    @map("deleted_at")
   
-  role             Role         @relation(fields: [roleId], references: [id])
-  assignedLeads    Lead[]       @relation("AssignedLeads")
-  createdMeetings  Meeting[]    @relation("CreatedMeetings")
-  createdProposals Proposal[]   @relation("CreatedProposals")
-  managedProjects  Project[]    @relation("ProjectManager")
-  auditLogs        AuditLog[]
+  role                    Role         @relation(fields: [roleId], references: [id])
+  assignedLeads           Lead[]       @relation("AssignedLeads")
+  leadsAssignedBy         Lead[]       @relation("LeadAssigners")
+  createdMeetings         Meeting[]    @relation("CreatedMeetings")
+  createdProposals        Proposal[]   @relation("CreatedProposals")
+  managedProjects         Project[]    @relation("ProjectManager")
+  clientRelationshipMgmt  Client[]     @relation("ClientRelationshipManager")
+  clientAccountMgmt       Client[]     @relation("ClientAccountManager")
+  auditLogs               AuditLog[]
 
   @@map("users")
 }
@@ -101,6 +104,8 @@ model Company {
   name          String      @db.VarChar(255)
   website       String?     @db.VarChar(255)
   address       String?     @db.Text
+  pincode       String?     @db.VarChar(20)
+  companyType   String?     @map("company_type") @db.VarChar(100)
   industryId    Int?        @map("industry_id")
   countryId     Int?        @map("country_id")
   stateId       Int?        @map("state_id")
@@ -120,34 +125,54 @@ model Company {
 }
 
 model Lead {
-  id            Int        @id @default(autoincrement())
-  title         String     @db.VarChar(255)
-  contactPerson String     @map("contact_person") @db.VarChar(150)
-  email         String     @db.VarChar(255)
-  phone         String?    @db.VarChar(20)
-  companyId     Int?       @map("company_id")
-  sourceId      Int?       @map("source_id")
-  priorityId    Int?       @map("priority_id")
-  assignedToId  Int?       @map("assigned_to_id")
-  budget        Decimal?   @db.Decimal(12, 2)
-  currency      String     @default("USD") @db.VarChar(10)
-  status        LeadStatus @default(NEW)
-  requirements  String?    @db.Text
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
-  deletedAt     DateTime?  @map("deleted_at")
+  id                Int        @id @default(autoincrement())
+  title             String     @db.VarChar(255)
+  contactPerson     String     @map("contact_person") @db.VarChar(150)
+  email             String     @db.VarChar(255)
+  phone             String?    @db.VarChar(20)
+  designation       String?    @db.VarChar(150)
+  alternatePhone    String?    @map("alternate_phone") @db.VarChar(20)
+  alternateEmail    String?    @map("alternate_email") @db.VarChar(255)
+  companyId         Int?       @map("company_id")
+  sourceId          Int?       @map("source_id")
+  priorityId        Int?       @map("priority_id")
+  assignedToId      Int?       @map("assigned_to_id")
+  assignedById      Int?       @map("assigned_by_id")
+  budget            Decimal?   @db.Decimal(12, 2)
+  currency          String     @default("USD") @db.VarChar(10)
+  status            LeadStatus @default(NEW)
+  requirements      String?    @db.Text
+  expectedCloseDate DateTime?  @map("expected_close_date")
+  nextFollowUpDate  DateTime?  @map("next_follow_up_date")
+  lastActivityAt    DateTime?  @map("last_activity_at")
+  assignedAt        DateTime?  @map("assigned_at")
+  closedAt          DateTime?  @map("closed_at")
+  convertedAt       DateTime?  @map("converted_at")
+  lostReason        String?    @map("lost_reason") @db.Text
+  wonAmount         Decimal?   @map("won_amount") @db.Decimal(14, 2)
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  deletedAt         DateTime?  @map("deleted_at")
 
   company       Company?    @relation(fields: [companyId], references: [id])
   source        MasterItem? @relation("LeadSource", fields: [sourceId], references: [id])
   priority      MasterItem? @relation("LeadPriority", fields: [priorityId], references: [id])
   assignedTo    User?       @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  assignedBy    User?       @relation("LeadAssigners", fields: [assignedById], references: [id])
   meetings      Meeting[]
   proposals     Proposal[]
   clients       Client[]
 
   @@index([assignedToId])
+  @@index([assignedById])
   @@index([status])
   @@index([email])
+  @@index([sourceId])
+  @@index([priorityId])
+  @@index([companyId])
+  @@index([status, assignedToId])
+  @@index([assignedToId, createdAt])
+  @@index([nextFollowUpDate])
   @@map("leads")
 }
 
@@ -191,18 +216,24 @@ model Proposal {
 }
 
 model Client {
-  id        Int       @id @default(autoincrement())
-  companyId Int       @map("company_id")
-  leadId    Int?      @map("lead_id")
-  gstPan    String?   @map("gst_pan") @db.VarChar(100)
-  status    String    @default("Active") @db.VarChar(20)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
+  id                      Int       @id @default(autoincrement())
+  companyId               Int       @map("company_id")
+  leadId                  Int?      @map("lead_id")
+  gstPan                  String?   @map("gst_pan") @db.VarChar(100)
+  paymentTerms            String?   @map("payment_terms") @db.VarChar(50)
+  creditLimit             Decimal?  @map("credit_limit") @db.Decimal(14, 2)
+  relationshipManagerId   Int?      @map("relationship_manager_id")
+  accountManagerId        Int?      @map("account_manager_id")
+  status                  String    @default("Active") @db.VarChar(20)
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  deletedAt               DateTime? @map("deleted_at")
 
-  company   Company   @relation(fields: [companyId], references: [id])
-  lead      Lead?     @relation(fields: [leadId], references: [id])
-  projects  Project[]
+  company             Company @relation(fields: [companyId], references: [id])
+  lead                Lead?   @relation(fields: [leadId], references: [id])
+  relationshipManager User?   @relation("ClientRelationshipManager", fields: [relationshipManagerId], references: [id])
+  accountManager      User?   @relation("ClientAccountManager", fields: [accountManagerId], references: [id])
+  projects            Project[]
 
   @@map("clients")
 }
