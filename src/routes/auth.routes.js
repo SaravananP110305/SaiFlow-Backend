@@ -4,6 +4,7 @@ import {
   refresh,
   logout,
   getMe,
+  getPrivileges,
   changePassword
 } from '../controllers/auth.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
@@ -12,10 +13,11 @@ import { isAuthenticated } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.post('/sessions', validate(loginSchema), login);
-router.put('/sessions', refresh);
-router.delete('/sessions', isAuthenticated, logout);
-router.get('/profile', isAuthenticated, getMe);
-router.patch('/profile/password', isAuthenticated, validate(changePasswordSchema), changePassword);
+router.post('/login', validate(loginSchema), login);
+router.put('/refresh', refresh);
+router.delete('/logout', isAuthenticated, logout);
+router.get('/me', isAuthenticated, getMe);
+router.get('/privileges', isAuthenticated, getPrivileges);
+router.patch('/change-password', isAuthenticated, validate(changePasswordSchema), changePassword);
 
 export default router;

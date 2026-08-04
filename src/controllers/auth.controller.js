@@ -16,6 +16,25 @@ const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+// Build a safe user payload without credentials and role permissions
+const buildUserPayload = (user) => {
+  const { passwordHash, refreshTokenHash, role, ...userData } = user;
+
+  const safeRole = role
+    ? {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        isSystem: role.isSystem
+      }
+    : null;
+
+  return {
+    ...userData,
+    role: safeRole
+  };
+};
+
 const storeRefreshToken = async (userId, refreshToken) => {
   const hashedRefreshToken = hashToken(refreshToken);
 
@@ -66,12 +85,8 @@ export const login = async (req, res, next) => {
 
     res.cookie('refreshToken', refreshToken, cookieOptions);
 
-    // Filter out password hash and return payload
-    const { passwordHash, refreshTokenHash, ...userPayload } = user;
-
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Login successful', {
-        user: userPayload,
         accessToken
       })
     );
@@ -157,11 +172,28 @@ export const logout = async (req, res, next) => {
 
 export const getMe = async (req, res, next) => {
   try {
-    const { passwordHash, refreshTokenHash, ...userPayload } = req.user;
-    
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Profile retrieved successfully', {
-        user: userPayload
+        user: buildUserPayload(req.user)
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPrivileges = async (req, res, next) => {
+  try {
+    const role = req.user.role;
+
+    res.status(StatusCodes.OK).json(
+      new ApiResponse(StatusCodes.OK, 'User privileges retrieved successfully', {
+        role: {
+          id: role.id,
+          name: role.name,
+          isSystem: role.isSystem
+        },
+        permissions: role.permissions || {}
       })
     );
   } catch (error) {
