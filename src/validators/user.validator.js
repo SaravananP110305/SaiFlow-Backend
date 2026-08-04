@@ -4,7 +4,7 @@ export const createUserSchema = Joi.object({
   firstName: Joi.string().min(2).max(100).required().messages({
     'any.required': 'First name is required'
   }),
-  lastName: Joi.string().min(2).max(100).required().messages({
+  lastName: Joi.string().max(100).allow('').required().messages({
     'any.required': 'Last name is required'
   }),
   email: Joi.string().email().required().lowercase().messages({
@@ -24,7 +24,7 @@ export const createUserSchema = Joi.object({
 
 export const updateUserSchema = Joi.object({
   firstName: Joi.string().min(2).max(100),
-  lastName: Joi.string().min(2).max(100),
+  lastName: Joi.string().max(100).allow(''),
   email: Joi.string().email().lowercase(),
   phone: Joi.string().max(20).allow('', null),
   roleId: Joi.number().integer().positive(),
