@@ -74,12 +74,14 @@ export const getCompanyById = async (req, res, next) => {
 
 export const createCompany = async (req, res, next) => {
   try {
-    const { name, website, address, pincode, companyType, industryId, countryId, stateId, cityId } = req.body;
+    const { name, website, email, phone, address, pincode, companyType, industryId, countryId, stateId, cityId } = req.body;
 
     const company = await prisma.company.create({
       data: {
         name,
         website,
+        email: email || null,
+        phone: phone || null,
         address,
         pincode,
         companyType,
@@ -104,7 +106,7 @@ export const createCompany = async (req, res, next) => {
 export const updateCompany = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { name, website, address, pincode, companyType, industryId, countryId, stateId, cityId } = req.body;
+    const { name, website, email, phone, address, pincode, companyType, industryId, countryId, stateId, cityId } = req.body;
 
     const existing = await prisma.company.findFirst({ where: { id, deletedAt: null } });
     if (!existing) {
@@ -116,6 +118,8 @@ export const updateCompany = async (req, res, next) => {
       data: {
         ...(name && { name }),
         ...(website !== undefined && { website }),
+        ...(email !== undefined && { email: email || null }),
+        ...(phone !== undefined && { phone: phone || null }),
         ...(address !== undefined && { address }),
         ...(pincode !== undefined && { pincode }),
         ...(companyType !== undefined && { companyType }),

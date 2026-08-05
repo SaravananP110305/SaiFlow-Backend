@@ -6,11 +6,23 @@ export const createClientSchema = Joi.object({
   }),
   leadId: Joi.number().integer().positive().allow(null),
   gstPan: Joi.string().max(100).allow('', null),
+  panNumber: Joi.string().max(100).allow('', null),
+  paymentTerms: Joi.string().max(50).allow('', null),
+  creditLimit: Joi.number().positive().allow(null),
+  preferredCommunication: Joi.string().max(50).allow('', null),
+  relationshipManagerId: Joi.number().integer().positive().allow(null),
+  accountManagerId: Joi.number().integer().positive().allow(null),
   status: Joi.string().valid('Active', 'Inactive').default('Active')
 });
 
 export const updateClientSchema = Joi.object({
   gstPan: Joi.string().max(100).allow('', null),
+  panNumber: Joi.string().max(100).allow('', null),
+  paymentTerms: Joi.string().max(50).allow('', null),
+  creditLimit: Joi.number().positive().allow(null),
+  preferredCommunication: Joi.string().max(50).allow('', null),
+  relationshipManagerId: Joi.number().integer().positive().allow(null),
+  accountManagerId: Joi.number().integer().positive().allow(null),
   status: Joi.string().valid('Active', 'Inactive')
 });
 
@@ -24,6 +36,9 @@ export const createProjectSchema = Joi.object({
   pmId: Joi.number().integer().positive().allow(null),
   status: Joi.string().max(50).default('Kickoff'),
   handoverDate: Joi.date().iso().allow(null),
+  targetDate: Joi.date().iso().allow(null),
+  kickoffDate: Joi.date().iso().allow(null),
+  notes: Joi.string().max(5000).allow('', null),
   srsDocumentUrl: Joi.string().uri().allow('', null)
 });
 
@@ -32,5 +47,8 @@ export const updateProjectSchema = Joi.object({
   pmId: Joi.number().integer().positive().allow(null),
   status: Joi.string().max(50),
   handoverDate: Joi.date().iso().allow(null),
+  targetDate: Joi.date().iso().allow(null),
+  kickoffDate: Joi.date().iso().allow(null),
+  notes: Joi.string().max(5000).allow('', null),
   srsDocumentUrl: Joi.string().uri().allow('', null)
 });
