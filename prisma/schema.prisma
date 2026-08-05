@@ -220,6 +220,10 @@ model Proposal {
   lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   createdBy      User      @relation("CreatedProposals", fields: [createdById], references: [id])
 
+  requirements   Json?
+  estimation     Json?
+  quotation      Json?
+
   @@map("proposals")
 }
 

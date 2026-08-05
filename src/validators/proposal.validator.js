@@ -15,7 +15,10 @@ export const createProposalSchema = Joi.object({
   }),
   status: Joi.string().max(50).default('Draft'),
   documentUrl: Joi.string().uri().allow('', null),
-  validUntil: Joi.date().iso().allow(null)
+  validUntil: Joi.date().iso().allow(null),
+  requirements: Joi.object().allow(null),
+  estimation: Joi.object().allow(null),
+  quotation: Joi.object().allow(null)
 });
 
 export const updateProposalSchema = Joi.object({
@@ -24,5 +27,8 @@ export const updateProposalSchema = Joi.object({
   amount: Joi.number().precision(2).positive(),
   status: Joi.string().max(50),
   documentUrl: Joi.string().uri().allow('', null),
-  validUntil: Joi.date().iso().allow(null)
+  validUntil: Joi.date().iso().allow(null),
+  requirements: Joi.object().allow(null),
+  estimation: Joi.object().allow(null),
+  quotation: Joi.object().allow(null)
 });

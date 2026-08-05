@@ -78,7 +78,7 @@ export const getProposalById = async (req, res, next) => {
 
 export const createProposal = async (req, res, next) => {
   try {
-    const { leadId, proposalNumber, title, amount, status, documentUrl, validUntil } = req.body;
+    const { leadId, proposalNumber, title, amount, status, documentUrl, validUntil, requirements, estimation, quotation } = req.body;
     const createdById = req.user.id;
 
     const lead = await prisma.lead.findFirst({ where: { id: leadId, deletedAt: null } });
@@ -118,7 +118,10 @@ export const createProposal = async (req, res, next) => {
           status: status || 'Draft',
           documentUrl,
           validUntil: validUntil ? new Date(validUntil) : null,
-          createdById
+          createdById,
+          requirements,
+          estimation,
+          quotation
         },
         include: {
           lead: { select: { id: true, title: true } },
@@ -148,7 +151,7 @@ export const updateProposal = async (req, res, next) => {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Proposal not found'));
     }
 
-    const { proposalNumber, title, amount, status, documentUrl, validUntil } = req.body;
+    const { proposalNumber, title, amount, status, documentUrl, validUntil, requirements, estimation, quotation } = req.body;
 
     // Check if status is transitioning to Accepted, Approved, or Won
     const isApprovedStatus = (s) => s && ['accepted', 'approved', 'won'].includes(s.toLowerCase());
@@ -184,7 +187,10 @@ export const updateProposal = async (req, res, next) => {
         ...(amount !== undefined && { amount }),
         ...(status && { status }),
         ...(documentUrl !== undefined && { documentUrl }),
-        ...(validUntil !== undefined && { validUntil: validUntil ? new Date(validUntil) : null })
+        ...(validUntil !== undefined && { validUntil: validUntil ? new Date(validUntil) : null }),
+        ...(requirements !== undefined && { requirements }),
+        ...(estimation !== undefined && { estimation }),
+        ...(quotation !== undefined && { quotation })
       }
     });
 
