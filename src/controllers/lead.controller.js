@@ -31,7 +31,7 @@ const getSort = (req) => {
  * ownership scoping for non-manager roles.
  */
 const buildLeadWhere = (req) => {
-  const { search, status, sourceId, priorityId, assignedToId, companyId, createdFrom, createdTo } = req.query;
+  const { search, status, sourceId, priorityId, assignedToId, createdFrom, createdTo } = req.query;
 
   const where = {
     deletedAt: null,
@@ -39,7 +39,6 @@ const buildLeadWhere = (req) => {
     ...(sourceId && { sourceId: parseId(sourceId) }),
     ...(priorityId && { priorityId: parseId(priorityId) }),
     ...(assignedToId && { assignedToId: parseId(assignedToId) }),
-    ...(companyId && { companyId: parseId(companyId) }),
     ...((createdFrom || createdTo) && {
       createdAt: {
         ...(createdFrom && { gte: new Date(createdFrom) }),
@@ -51,8 +50,7 @@ const buildLeadWhere = (req) => {
         { title: { contains: search, mode: 'insensitive' } },
         { contactPerson: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
-        { company: { name: { contains: search, mode: 'insensitive' } } }
+        { phone: { contains: search, mode: 'insensitive' } }
       ]
     })
   };
@@ -74,13 +72,13 @@ const assertCanEditLead = (req, lead) => {
 };
 
 const leadInclude = {
-  company: {
-    select: { id: true, name: true, website: true, address: true, pincode: true }
-  },
   source: { select: { id: true, name: true } },
   priority: { select: { id: true, name: true } },
-  assignedTo: { select: { id: true, name: true, email: true } },
-  assignedBy: { select: { id: true, name: true } }
+  industry: { select: { id: true, name: true } },
+  country: { select: { id: true, name: true } },
+  state: { select: { id: true, name: true } },
+  city: { select: { id: true, name: true } },
+  assignedTo: { select: { id: true, name: true, email: true } }
 };
 
 const assertRelationExists = async (model, id, label, { softDeletable = true } = {}) => {
@@ -100,7 +98,7 @@ const findDuplicateLead = async (email, excludeId) => {
       deletedAt: null,
       ...(excludeId && { id: { not: excludeId } })
     },
-    select: { id: true, company: { select: { name: true } }, contactPerson: true, status: true }
+    select: { id: true, title: true, contactPerson: true, status: true }
   });
 };
 
@@ -152,16 +150,18 @@ export const getLeadById = async (req, res, next) => {
     const [lead, auditLogsRaw] = await Promise.all([
       prisma.lead.findFirst({
         where: { id, deletedAt: null },
-        include: {
-          company: true,
-          source: true,
-          priority: true,
-          assignedTo: { select: { id: true, name: true, email: true, phone: true } },
-          assignedBy: { select: { id: true, name: true } },
-          meetings: { orderBy: { scheduledAt: 'desc' } },
-          proposals: { orderBy: { createdAt: 'desc' } },
-          clients: { where: { deletedAt: null }, select: { id: true, status: true } }
-        }
+      include: {
+        source: true,
+        priority: true,
+        industry: true,
+        country: true,
+        state: true,
+        city: true,
+        assignedTo: { select: { id: true, name: true, email: true, phone: true } },
+        meetings: { orderBy: { scheduledAt: 'desc' } },
+        proposals: { orderBy: { createdAt: 'desc' } },
+        clients: { where: { deletedAt: null }, select: { id: true, status: true } }
+      }
       }),
       prisma.auditLog.findMany({
         where: { entity: 'Lead', entityId: id },
@@ -200,25 +200,31 @@ export const createLead = async (req, res, next) => {
       contactPerson,
       email,
       phone,
-      companyId,
+      website,
+      industryId,
+      companyType,
+      address,
+      countryId,
+      stateId,
+      cityId,
+      pincode,
       sourceId,
       priorityId,
       assignedToId,
-      budget,
-      currency,
       status,
       requirements,
       designation,
       alternatePhone,
-      alternateEmail,
-      expectedCloseDate,
-      nextFollowUpDate
+      alternateEmail
     } = req.body;
 
     await Promise.all([
-      assertRelationExists('company', companyId, 'Company'),
       assertRelationExists('masterItem', sourceId, 'Lead source', { softDeletable: false }),
       assertRelationExists('masterItem', priorityId, 'Priority', { softDeletable: false }),
+      assertRelationExists('masterItem', industryId, 'Industry', { softDeletable: false }),
+      assertRelationExists('masterItem', countryId, 'Country', { softDeletable: false }),
+      assertRelationExists('masterItem', stateId, 'State', { softDeletable: false }),
+      assertRelationExists('masterItem', cityId, 'City', { softDeletable: false }),
       assertRelationExists('user', assignedToId, 'Assigned user')
     ]);
 
@@ -245,22 +251,23 @@ export const createLead = async (req, res, next) => {
         contactPerson,
         email,
         phone,
-        companyId,
+        website,
+        industryId,
+        companyType,
+        address,
+        countryId,
+        stateId,
+        cityId,
+        pincode,
         sourceId,
         priorityId,
         assignedToId,
         assignedAt: isAssigned ? now : null,
-        assignedById: isAssigned ? req.user.id : null,
-        budget,
-        currency: currency || 'USD',
         status: finalStatus,
         requirements,
         designation,
         alternatePhone,
-        alternateEmail,
-        expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null,
-        nextFollowUpDate: nextFollowUpDate ? new Date(nextFollowUpDate) : null,
-        lastActivityAt: now
+        alternateEmail
       },
       include: leadInclude
     });
@@ -297,21 +304,22 @@ export const updateLead = async (req, res, next) => {
       contactPerson,
       email,
       phone,
-      companyId,
+      website,
+      industryId,
+      companyType,
+      address,
+      countryId,
+      stateId,
+      cityId,
+      pincode,
       sourceId,
       priorityId,
       assignedToId,
-      budget,
-      currency,
       status,
       requirements,
       designation,
       alternatePhone,
-      alternateEmail,
-      expectedCloseDate,
-      nextFollowUpDate,
-      lostReason,
-      wonAmount
+      alternateEmail
     } = req.body;
 
     const changes = [];
@@ -355,9 +363,12 @@ export const updateLead = async (req, res, next) => {
     }
 
     await Promise.all([
-      assertRelationExists('company', companyId, 'Company'),
       assertRelationExists('masterItem', sourceId, 'Lead source', { softDeletable: false }),
       assertRelationExists('masterItem', priorityId, 'Priority', { softDeletable: false }),
+      assertRelationExists('masterItem', industryId, 'Industry', { softDeletable: false }),
+      assertRelationExists('masterItem', countryId, 'Country', { softDeletable: false }),
+      assertRelationExists('masterItem', stateId, 'State', { softDeletable: false }),
+      assertRelationExists('masterItem', cityId, 'City', { softDeletable: false }),
       assertRelationExists('user', assignedToId, 'Assigned user')
     ]);
 
@@ -371,10 +382,6 @@ export const updateLead = async (req, res, next) => {
     }
 
     const finalStatus = nextStatus || (autoAssigned ? 'ASSIGNED' : existing.status);
-    const closedAt =
-      TERMINAL_STATUSES.includes(finalStatus)
-        ? existing.closedAt || now
-        : null;
 
     const updated = await prisma.lead.update({
       where: { id },
@@ -383,26 +390,23 @@ export const updateLead = async (req, res, next) => {
         ...(contactPerson !== undefined && { contactPerson }),
         ...(email !== undefined && { email }),
         ...(phone !== undefined && { phone }),
-        ...(companyId !== undefined && { companyId }),
+        ...(website !== undefined && { website }),
+        ...(industryId !== undefined && { industryId }),
+        ...(companyType !== undefined && { companyType }),
+        ...(address !== undefined && { address }),
+        ...(countryId !== undefined && { countryId }),
+        ...(stateId !== undefined && { stateId }),
+        ...(cityId !== undefined && { cityId }),
+        ...(pincode !== undefined && { pincode }),
         ...(sourceId !== undefined && { sourceId }),
         ...(priorityId !== undefined && { priorityId }),
         ...(assignedToId !== undefined && { assignedToId }),
-        ...(assigneeChanged && { assignedAt: assignedToId ? now : null, assignedById: assignedToId ? req.user.id : null }),
+        ...(assigneeChanged && { assignedAt: assignedToId ? now : null }),
         ...((nextStatus || autoAssigned) && { status: finalStatus }),
-        ...(budget !== undefined && { budget }),
-        ...(wonAmount !== undefined && { wonAmount }),
-        ...(currency !== undefined && { currency }),
         ...(requirements !== undefined && { requirements }),
         ...(designation !== undefined && { designation }),
         ...(alternatePhone !== undefined && { alternatePhone }),
-        ...(alternateEmail !== undefined && { alternateEmail }),
-        ...(expectedCloseDate !== undefined && { expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null }),
-        ...(nextFollowUpDate !== undefined && { nextFollowUpDate: nextFollowUpDate ? new Date(nextFollowUpDate) : null }),
-        ...(nextStatus && TERMINAL_STATUSES.includes(nextStatus)
-          ? { lostReason: lostReason ?? requirements ?? existing.requirements ?? null }
-          : { ...(lostReason !== undefined && { lostReason }) }),
-        closedAt,
-        lastActivityAt: now
+        ...(alternateEmail !== undefined && { alternateEmail })
       },
       include: leadInclude
     });
@@ -449,9 +453,7 @@ export const assignLead = async (req, res, next) => {
       data: {
         assignedToId,
         assignedAt: now,
-        assignedById: req.user.id,
-        status: newStatus,
-        lastActivityAt: now
+        status: newStatus
       },
       include: {
         assignedTo: { select: { id: true, name: true, email: true } }
@@ -528,17 +530,9 @@ export const getLeadStatusCounts = async (req, res, next) => {
   try {
     const where = buildLeadWhere(req);
 
-    const [grouped, total, wonValueAgg, pipelineAgg] = await Promise.all([
+    const [grouped, total] = await Promise.all([
       prisma.lead.groupBy({ by: ['status'], where, _count: { _all: true } }),
-      prisma.lead.count({ where }),
-      prisma.lead.aggregate({
-        where: { ...where, status: 'WON' },
-        _sum: { wonAmount: true, budget: true }
-      }),
-      prisma.lead.aggregate({
-        where: { ...where, status: { notIn: ['WON', 'LOST', 'DISQUALIFIED'] } },
-        _sum: { budget: true }
-      })
+      prisma.lead.count({ where })
     ]);
 
     const counts = {};
@@ -549,9 +543,7 @@ export const getLeadStatusCounts = async (req, res, next) => {
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Lead status counts retrieved successfully', {
         counts,
-        total,
-        wonValue: wonValueAgg._sum.wonAmount || wonValueAgg._sum.budget || 0,
-        pipelineValue: pipelineAgg._sum.budget || 0
+        total
       })
     );
   } catch (error) {
@@ -589,9 +581,7 @@ export const bulkAssignLeads = async (req, res, next) => {
         data: {
           assignedToId,
           assignedAt: now,
-          assignedById: req.user.id,
-          status: lead.status === 'NEW' ? 'ASSIGNED' : lead.status,
-          lastActivityAt: now
+          status: lead.status === 'NEW' ? 'ASSIGNED' : lead.status
         }
       })
     );
@@ -675,50 +665,10 @@ export const bulkDeleteLeads = async (req, res, next) => {
 // Import / Export
 // ──────────────────────────────────────────────────────────────────────────
 
-const resolveCompany = async (row) => {
-  if (!row.companyName) return null;
-
-  const existing = await prisma.company.findFirst({
-    where: { name: { equals: row.companyName, mode: 'insensitive' }, deletedAt: null }
-  });
-
-  const data = {
-    website: row.website || undefined,
-    address: row.address || undefined,
-    pincode: row.pincode || undefined,
-    companyType: row.companyType || undefined,
-    industryId: row.industryId || null,
-    countryId: row.countryId || null,
-    stateId: row.stateId || null,
-    cityId: row.cityId || null
-  };
-
-  if (existing) {
-    return prisma.company.update({ where: { id: existing.id }, data });
-  }
-
-  return prisma.company.create({ data: { name: row.companyName, ...data } });
-};
-
 export const importLeads = async (req, res, next) => {
   try {
     const rows = req.body.leads;
     const seenEmails = new Set();
-
-    // Import creates companies as part of lead ingestion, so honor the
-    // 'companies:create' permission for non-administrators.
-    const canManageCompanies =
-      req.user.role.name === 'Administrator' ||
-      (req.user.role.permissions?.companies || []).includes('create');
-
-    if (!canManageCompanies && rows.some((row) => row.companyName)) {
-      return next(
-        new ApiError(
-          StatusCodes.FORBIDDEN,
-          "Importing rows with companies requires the 'companies:create' permission."
-        )
-      );
-    }
 
     let imported = 0;
     let skipped = 0;
@@ -764,12 +714,6 @@ export const importLeads = async (req, res, next) => {
           seenEmails.add(normalizedEmail);
         }
 
-        let companyId = null;
-        if (cleanRow.companyName) {
-          const company = await resolveCompany(cleanRow);
-          companyId = company.id;
-        }
-
         const now = new Date();
         const isAssigned = !!cleanRow.assignedToId;
         let status = normalizeLeadStatus(cleanRow.status) || 'NEW';
@@ -783,22 +727,23 @@ export const importLeads = async (req, res, next) => {
             contactPerson: cleanRow.contactPerson || null,
             email: cleanRow.email || `lead-${Date.now()}-${index}@saiflow.local`,
             phone: cleanRow.phone || null,
-            companyId,
+            website: cleanRow.website || null,
+            industryId: cleanRow.industryId || null,
+            companyType: cleanRow.companyType || null,
+            address: cleanRow.address || null,
+            countryId: cleanRow.countryId || null,
+            stateId: cleanRow.stateId || null,
+            cityId: cleanRow.cityId || null,
+            pincode: cleanRow.pincode || null,
             sourceId: cleanRow.sourceId || null,
             priorityId: cleanRow.priorityId || null,
             assignedToId: cleanRow.assignedToId || null,
             assignedAt: isAssigned ? now : null,
-            assignedById: isAssigned ? req.user.id : null,
-            budget: cleanRow.budget || null,
-            currency: cleanRow.currency || 'USD',
             status,
             requirements: cleanRow.requirements || null,
             designation: cleanRow.designation || null,
             alternatePhone: cleanRow.alternatePhone || null,
-            alternateEmail: cleanRow.alternateEmail || null,
-            expectedCloseDate: cleanRow.expectedCloseDate ? new Date(cleanRow.expectedCloseDate) : null,
-            nextFollowUpDate: cleanRow.nextFollowUpDate ? new Date(cleanRow.nextFollowUpDate) : null,
-            lastActivityAt: now
+            alternateEmail: cleanRow.alternateEmail || null
           }
         });
         imported += 1;
@@ -849,7 +794,6 @@ export const exportLeads = async (req, res, next) => {
     const leads = await prisma.lead.findMany({
       where,
       include: {
-        company: { select: { name: true } },
         source: { select: { name: true } },
         priority: { select: { name: true } },
         assignedTo: { select: { name: true, email: true } }
@@ -868,15 +812,12 @@ export const exportLeads = async (req, res, next) => {
       'Priority',
       'Source',
       'Lead Owner',
-      'Budget',
-      'Currency',
-      'Expected Close',
       'Created At'
     ];
 
     const rows = leads.map((lead) => [
       `SF-LEAD-${String(lead.id).padStart(4, '0')}`,
-      lead.company?.name || lead.title,
+      lead.title,
       lead.contactPerson,
       lead.email,
       lead.phone,
@@ -884,9 +825,6 @@ export const exportLeads = async (req, res, next) => {
       lead.priority?.name || '',
       lead.source?.name || '',
       lead.assignedTo?.name || 'Unassigned',
-      lead.budget || '',
-      lead.currency || '',
-      lead.expectedCloseDate ? lead.expectedCloseDate.toISOString().split('T')[0] : '',
       lead.createdAt ? lead.createdAt.toISOString().split('T')[0] : ''
     ]);
 
@@ -915,8 +853,7 @@ export const convertLeadToClient = async (req, res, next) => {
       paymentTerms,
       creditLimit,
       relationshipManagerId,
-      accountManagerId,
-      wonAmount
+      accountManagerId
     } = req.body;
 
     const lead = await prisma.lead.findFirst({
@@ -929,10 +866,6 @@ export const convertLeadToClient = async (req, res, next) => {
     }
 
     assertCanEditLead(req, lead);
-
-    if (!lead.companyId) {
-      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Lead must have a company before conversion'));
-    }
 
     if (lead.clients.length > 0) {
       return next(new ApiError(StatusCodes.CONFLICT, 'This lead has already been converted to a client'));
@@ -947,16 +880,36 @@ export const convertLeadToClient = async (req, res, next) => {
       );
     }
 
+    // Client records still belong to a Company; materialize one from the lead's
+    // self-contained details (find-or-create) so conversion keeps working.
+    let company = await prisma.company.findFirst({
+      where: { name: { equals: lead.title, mode: 'insensitive' }, deletedAt: null }
+    });
+    if (!company) {
+      company = await prisma.company.create({
+        data: {
+          name: lead.title,
+          website: lead.website || undefined,
+          address: lead.address || undefined,
+          pincode: lead.pincode || undefined,
+          companyType: lead.companyType || undefined,
+          industryId: lead.industryId || null,
+          countryId: lead.countryId || null,
+          stateId: lead.stateId || null,
+          cityId: lead.cityId || null
+        }
+      });
+    }
+
     await Promise.all([
       assertRelationExists('user', relationshipManagerId, 'Relationship manager'),
       assertRelationExists('user', accountManagerId, 'Account manager')
     ]);
 
-    const now = new Date();
     const [client] = await prisma.$transaction([
       prisma.client.create({
         data: {
-          companyId: lead.companyId,
+          companyId: company.id,
           leadId: lead.id,
           gstPan: gstPan || null,
           status: 'Active',
@@ -970,11 +923,7 @@ export const convertLeadToClient = async (req, res, next) => {
       prisma.lead.update({
         where: { id },
         data: {
-          status: 'WON',
-          wonAmount: wonAmount !== undefined ? wonAmount : lead.budget,
-          closedAt: now,
-          convertedAt: now,
-          lastActivityAt: now
+          status: 'WON'
         }
       })
     ]);
@@ -984,7 +933,7 @@ export const convertLeadToClient = async (req, res, next) => {
       action: 'lead_converted',
       entity: 'Lead',
       entityId: id,
-      payload: { clientId: client.id, companyId: lead.companyId },
+      payload: { clientId: client.id, companyId: company.id },
       ipAddress: getIp(req)
     });
 

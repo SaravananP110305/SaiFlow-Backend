@@ -25,7 +25,7 @@ export const getMeetings = async (req, res, next) => {
         OR: [
           { lead: { title: { contains: search, mode: 'insensitive' } } },
           { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-          { lead: { company: { name: { contains: search, mode: 'insensitive' } } } }
+          { lead: { title: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };

@@ -22,17 +22,7 @@ const companyAddressFields = {
   alternatePhone: Joi.string().max(20).allow('', null),
   alternateEmail: Joi.string().email().max(255).lowercase().allow('', null).messages({
     'string.email': 'Valid alternate email is required'
-  }),
-  expectedCloseDate: Joi.date().iso().allow(null).messages({
-    'date.base': 'Expected close date must be a valid ISO date'
-  }),
-  nextFollowUpDate: Joi.date().iso().allow(null).messages({
-    'date.base': 'Next follow-up date must be a valid ISO date'
-  }),
-  budget: Joi.number().precision(2).positive().allow(null),
-  wonAmount: Joi.number().precision(2).positive().allow(null),
-  currency: Joi.string().max(10).default('USD'),
-  lostReason: Joi.string().allow('', null)
+  })
 };
 
 export const createLeadSchema = Joi.object({
@@ -47,7 +37,14 @@ export const createLeadSchema = Joi.object({
     'any.required': 'Email is required'
   }),
   phone: Joi.string().max(20).allow('', null),
-  companyId: Joi.number().integer().positive().allow(null),
+  website: Joi.string().max(255).allow('', null),
+  industryId: Joi.number().integer().positive().allow(null),
+  companyType: Joi.string().max(100).allow('', null),
+  address: Joi.string().allow('', null),
+  countryId: Joi.number().integer().positive().allow(null),
+  stateId: Joi.number().integer().positive().allow(null),
+  cityId: Joi.number().integer().positive().allow(null),
+  pincode: Joi.string().max(20).allow('', null),
   sourceId: Joi.number().integer().positive().allow(null),
   priorityId: Joi.number().integer().positive().allow(null),
   assignedToId: Joi.number().integer().positive().allow(null),
@@ -63,7 +60,14 @@ export const updateLeadSchema = Joi.object({
     'string.email': 'Valid email is required'
   }),
   phone: Joi.string().max(20).allow('', null),
-  companyId: Joi.number().integer().positive().allow(null),
+  website: Joi.string().max(255).allow('', null),
+  industryId: Joi.number().integer().positive().allow(null),
+  companyType: Joi.string().max(100).allow('', null),
+  address: Joi.string().allow('', null),
+  countryId: Joi.number().integer().positive().allow(null),
+  stateId: Joi.number().integer().positive().allow(null),
+  cityId: Joi.number().integer().positive().allow(null),
+  pincode: Joi.string().max(20).allow('', null),
   sourceId: Joi.number().integer().positive().allow(null),
   priorityId: Joi.number().integer().positive().allow(null),
   assignedToId: Joi.number().integer().positive().allow(null),
@@ -102,12 +106,8 @@ export const importLeadRowSchema = Joi.object({
   sourceId: Joi.number().integer().positive().allow(null),
   priorityId: Joi.number().integer().positive().allow(null),
   assignedToId: Joi.number().integer().positive().allow(null),
-  budget: Joi.number().precision(2).positive().allow(null),
-  currency: Joi.string().max(10).allow('', null),
   status: leadStatusField.default('NEW'),
-  requirements: Joi.string().allow('', null),
-  expectedCloseDate: Joi.date().iso().allow(null),
-  nextFollowUpDate: Joi.date().iso().allow(null)
+  requirements: Joi.string().allow('', null)
 });
 
 export const importLeadsSchema = Joi.object({
@@ -147,6 +147,5 @@ export const convertLeadSchema = Joi.object({
   paymentTerms: Joi.string().max(50).allow('', null),
   creditLimit: Joi.number().precision(2).positive().allow(null),
   relationshipManagerId: Joi.number().integer().positive().allow(null),
-  accountManagerId: Joi.number().integer().positive().allow(null),
-  wonAmount: Joi.number().precision(2).positive().allow(null)
+  accountManagerId: Joi.number().integer().positive().allow(null)
 });

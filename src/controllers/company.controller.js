@@ -26,8 +26,7 @@ export const getCompanies = async (req, res, next) => {
           industry: { select: { id: true, name: true } },
           country: { select: { id: true, name: true } },
           state: { select: { id: true, name: true } },
-          city: { select: { id: true, name: true } },
-          _count: { select: { leads: { where: { deletedAt: null } } } }
+          city: { select: { id: true, name: true } }
         },
         orderBy: { name: 'asc' },
         skip,
@@ -35,16 +34,11 @@ export const getCompanies = async (req, res, next) => {
       })
     ]);
 
-    const data = companies.map((c) => ({
-      ...c,
-      leadCount: c._count.leads
-    }));
-
     res.status(StatusCodes.OK).json(
       new ApiResponse(
         StatusCodes.OK,
         'Companies retrieved successfully',
-        data,
+        companies,
         { total, page, limit, totalPages: Math.ceil(total / limit) }
       )
     );
@@ -62,11 +56,7 @@ export const getCompanyById = async (req, res, next) => {
         industry: true,
         country: true,
         state: true,
-        city: true,
-        leads: {
-          where: { deletedAt: null },
-          select: { id: true, title: true, status: true, budget: true, createdAt: true }
-        }
+        city: true
       }
     });
 

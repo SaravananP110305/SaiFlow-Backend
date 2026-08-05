@@ -21,7 +21,7 @@ export const getProposals = async (req, res, next) => {
           { proposalNumber: { contains: search, mode: 'insensitive' } },
           { lead: { title: { contains: search, mode: 'insensitive' } } },
           { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-          { lead: { company: { name: { contains: search, mode: 'insensitive' } } } }
+          { lead: { title: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };

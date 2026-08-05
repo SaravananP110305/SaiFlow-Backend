@@ -25,7 +25,7 @@ export const getClients = async (req, res, next) => {
         where,
         include: {
           company: true,
-          lead: { select: { id: true, title: true, status: true, budget: true } },
+          lead: { select: { id: true, title: true, status: true } },
           projects: {
             include: {
               pm: { select: { id: true, name: true, email: true } }
