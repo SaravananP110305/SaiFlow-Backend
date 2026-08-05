@@ -146,24 +146,30 @@ export const getLeads = async (req, res, next) => {
 export const getLeadById = async (req, res, next) => {
   try {
     const id = parseId(req.params.id);
-    const lead = await prisma.lead.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        company: true,
-        source: true,
-        priority: true,
-        assignedTo: { select: { id: true, name: true, email: true, phone: true } },
-        assignedBy: { select: { id: true, name: true } },
-        meetings: { orderBy: { scheduledAt: 'desc' } },
-        proposals: { orderBy: { createdAt: 'desc' } },
-        clients: { where: { deletedAt: null }, select: { id: true, status: true } },
-        auditLogs: {
-          take: 50,
-          orderBy: { createdAt: 'desc' },
-          include: { user: { select: { id: true, name: true } } }
+
+    // AuditLog is a generic entity/entityId table (no FK to Lead), so it cannot
+    // be included as a relation; fetch it separately and attach it below.
+    const [lead, auditLogsRaw] = await Promise.all([
+      prisma.lead.findFirst({
+        where: { id, deletedAt: null },
+        include: {
+          company: true,
+          source: true,
+          priority: true,
+          assignedTo: { select: { id: true, name: true, email: true, phone: true } },
+          assignedBy: { select: { id: true, name: true } },
+          meetings: { orderBy: { scheduledAt: 'desc' } },
+          proposals: { orderBy: { createdAt: 'desc' } },
+          clients: { where: { deletedAt: null }, select: { id: true, status: true } }
         }
-      }
-    });
+      }),
+      prisma.auditLog.findMany({
+        where: { entity: 'Lead', entityId: id },
+        take: 50,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { id: true, name: true } } }
+      })
+    ]);
 
     if (!lead) {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Lead not found'));
@@ -171,8 +177,12 @@ export const getLeadById = async (req, res, next) => {
 
     assertCanEditLead(req, lead);
 
+    // AuditLog.id is BigInt, which JSON.stringify cannot serialize; convert it
+    // to a string so res.json() does not throw.
+    const auditLogs = auditLogsRaw.map((log) => ({ ...log, id: String(log.id) }));
+
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Lead retrieved successfully', lead)
+      new ApiResponse(StatusCodes.OK, 'Lead retrieved successfully', { ...lead, auditLogs })
     );
   } catch (error) {
     next(error);
