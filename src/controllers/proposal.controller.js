@@ -31,7 +31,7 @@ export const getProposals = async (req, res, next) => {
       prisma.proposal.findMany({
         where,
         include: {
-          lead: { select: { id: true, title: true, contactPerson: true, email: true, status: true } },
+          lead: { select: { id: true, title: true, contactPerson: true, email: true, phone: true, status: true } },
           createdBy: { select: { id: true, name: true, email: true } }
         },
         orderBy: { createdAt: 'desc' },

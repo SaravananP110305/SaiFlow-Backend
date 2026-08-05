@@ -24,7 +24,11 @@ export const getClients = async (req, res, next) => {
       prisma.client.findMany({
         where,
         include: {
-          company: true,
+          company: {
+            include: {
+              industry: true
+            }
+          },
           lead: {
             select: {
               id: true,
