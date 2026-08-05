@@ -71,6 +71,7 @@ model User {
   clientRelationshipMgmt  Client[]     @relation("ClientRelationshipManager")
   clientAccountMgmt       Client[]     @relation("ClientAccountManager")
   auditLogs               AuditLog[]
+  createdConnects         Connect[]    @relation("CreatedConnects")
 
   @@map("users")
 }
@@ -165,6 +166,7 @@ model Lead {
   meetings     Meeting[]
   proposals    Proposal[]
   clients      Client[]
+  connects     Connect[]
 
   @@index([assignedToId])
   @@index([status])
@@ -258,6 +260,36 @@ model Project {
   pm             User?     @relation("ProjectManager", fields: [pmId], references: [id])
 
   @@map("projects")
+}
+
+model Connect {
+  id            Int       @id @default(autoincrement())
+  leadId        Int       @map("lead_id")
+  // Denormalized lead display fields so the Contact / Follow-up pages need no joins.
+  company       String    @db.VarChar(255)
+  contactPerson String?   @map("contact_person") @db.VarChar(150)
+  phone         String?   @db.VarChar(20)
+  assignedTo    String?   @map("assigned_to") @db.VarChar(150)
+  // Contact outcome: CONTACTED / INTERESTED / CALL_LATER / NOT_INTERESTED
+  outcome       String?   @db.VarChar(30)
+  summary       String?   @db.Text
+  followUpType  String?   @map("follow_up_type") @db.VarChar(30)
+  followUpDate  String?   @map("follow_up_date") @db.VarChar(10)
+  followUpTime  String?   @map("follow_up_time") @db.VarChar(10)
+  // Follow-up lifecycle: SCHEDULED / COMPLETED / MISSED / RESCHEDULED
+  status        String    @default("SCHEDULED") @db.VarChar(30)
+  createdById   Int?      @map("created_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdBy     User?     @relation("CreatedConnects", fields: [createdById], references: [id])
+
+  @@index([leadId])
+  @@index([status])
+  @@index([createdById])
+  @@map("connect")
 }
 
 model AuditLog {

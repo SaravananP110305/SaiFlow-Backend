@@ -9,6 +9,7 @@ import leadRoutes from './lead.routes.js';
 import meetingRoutes from './meeting.routes.js';
 import proposalRoutes from './proposal.routes.js';
 import clientRoutes from './client.routes.js';
+import connectRoutes from './connect.routes.js';
 import reportRoutes from './report.routes.js';
 
 const router = Router();
@@ -42,6 +43,9 @@ router.use('/proposals', proposalRoutes);
 
 // Client & Project Handover routes
 router.use('/clients', clientRoutes);
+
+// Contact & Follow-up (Connect) routes
+router.use('/connect', connectRoutes);
 
 // Analytics & Reports routes
 router.use('/reports', reportRoutes);
