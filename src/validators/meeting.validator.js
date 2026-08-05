@@ -13,25 +13,30 @@ export const createMeetingSchema = Joi.object({
     'any.required': 'Scheduled date & time is required'
   }),
   durationMinutes: Joi.number().integer().positive().default(30),
-  meetingLink: Joi.string().uri().allow('', null),
+  // Holds either an online meeting URL or an offline venue address.
+  meetingLink: Joi.string().allow('', null),
   status: Joi.string().valid(...meetingStatuses).default('SCHEDULED'),
   agenda: Joi.string().allow('', null),
-  scopeNotes: Joi.string().allow('', null)
+  scopeNotes: Joi.string().allow('', null),
+  actionSummary: Joi.string().allow('', null)
 });
 
 export const updateMeetingSchema = Joi.object({
   title: Joi.string().min(2).max(255),
   scheduledAt: Joi.date().iso(),
   durationMinutes: Joi.number().integer().positive(),
-  meetingLink: Joi.string().uri().allow('', null),
+  // Holds either an online meeting URL or an offline venue address.
+  meetingLink: Joi.string().allow('', null),
   status: Joi.string().valid(...meetingStatuses),
   agenda: Joi.string().allow('', null),
-  scopeNotes: Joi.string().allow('', null)
+  scopeNotes: Joi.string().allow('', null),
+  actionSummary: Joi.string().allow('', null)
 });
 
 export const updateMeetingStatusSchema = Joi.object({
   status: Joi.string().valid(...meetingStatuses).required().messages({
     'any.required': 'Meeting status is required'
   }),
-  scopeNotes: Joi.string().allow('', null)
+  scopeNotes: Joi.string().allow('', null),
+  actionSummary: Joi.string().allow('', null)
 });

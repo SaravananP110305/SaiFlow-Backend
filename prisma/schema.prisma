@@ -193,6 +193,7 @@ model Meeting {
   status          MeetingStatus @default(SCHEDULED)
   agenda          String?       @db.Text
   scopeNotes      String?       @map("scope_notes") @db.Text
+  actionSummary   String?       @map("action_summary") @db.Text
   createdById     Int           @map("created_by_id")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")

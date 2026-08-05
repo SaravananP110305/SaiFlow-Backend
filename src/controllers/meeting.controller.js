@@ -88,7 +88,7 @@ export const getMeetingById = async (req, res, next) => {
 
 export const createMeeting = async (req, res, next) => {
   try {
-    const { leadId, title, scheduledAt, durationMinutes, meetingLink, status, agenda, scopeNotes } = req.body;
+    const { leadId, title, scheduledAt, durationMinutes, meetingLink, status, agenda, scopeNotes, actionSummary } = req.body;
     const createdById = req.user.id;
 
     const lead = await prisma.lead.findFirst({ where: { id: leadId, deletedAt: null } });
@@ -108,6 +108,7 @@ export const createMeeting = async (req, res, next) => {
           status: status || 'SCHEDULED',
           agenda,
           scopeNotes,
+          actionSummary,
           createdById
         },
         include: {
@@ -138,7 +139,7 @@ export const updateMeeting = async (req, res, next) => {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Meeting not found'));
     }
 
-    const { title, scheduledAt, durationMinutes, meetingLink, status, agenda, scopeNotes } = req.body;
+    const { title, scheduledAt, durationMinutes, meetingLink, status, agenda, scopeNotes, actionSummary } = req.body;
 
     const updated = await prisma.meeting.update({
       where: { id },
@@ -149,7 +150,8 @@ export const updateMeeting = async (req, res, next) => {
         ...(meetingLink !== undefined && { meetingLink }),
         ...(status && { status }),
         ...(agenda !== undefined && { agenda }),
-        ...(scopeNotes !== undefined && { scopeNotes })
+        ...(scopeNotes !== undefined && { scopeNotes }),
+        ...(actionSummary !== undefined && { actionSummary })
       },
       include: {
         lead: { select: { id: true, title: true } }
@@ -167,7 +169,7 @@ export const updateMeeting = async (req, res, next) => {
 export const updateMeetingStatus = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { status, scopeNotes } = req.body;
+    const { status, scopeNotes, actionSummary } = req.body;
 
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) {
@@ -178,7 +180,8 @@ export const updateMeetingStatus = async (req, res, next) => {
       where: { id },
       data: {
         status,
-        ...(scopeNotes !== undefined && { scopeNotes })
+        ...(scopeNotes !== undefined && { scopeNotes }),
+        ...(actionSummary !== undefined && { actionSummary })
       }
     });
 
