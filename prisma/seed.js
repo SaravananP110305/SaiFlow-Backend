@@ -170,6 +170,29 @@ async function main() {
     console.log('States for USA seeded.');
   }
 
+  // 4. Seed System Settings
+  console.log('Seeding system settings...');
+  const defaultSettings = [
+    { key: 'appName', category: 'GENERAL', value: 'SaiFlow ERP' },
+    { key: 'timeZone', category: 'GENERAL', value: 'GMT+05:30' },
+    { key: 'language', category: 'GENERAL', value: 'English (US)' },
+    { key: 'companyName', category: 'COMPANY', value: 'Sai Technologies' },
+    { key: 'contactEmail', category: 'COMPANY', value: 'info@saiflow.com' },
+    { key: 'address', category: 'COMPANY', value: '12, Tech Park Avenue, Bangalore, India' }
+  ];
+
+  for (const setting of defaultSettings) {
+    await prisma.setting.upsert({
+      where: { key: setting.key },
+      update: {
+        value: setting.value,
+        category: setting.category
+      },
+      create: setting
+    });
+  }
+  console.log('System settings seeded.');
+
   console.log('🏁 Seeding completed successfully!');
 }
 

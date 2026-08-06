@@ -72,6 +72,7 @@ model User {
   clientAccountMgmt       Client[]     @relation("ClientAccountManager")
   auditLogs               AuditLog[]
   createdConnects         Connect[]    @relation("CreatedConnects")
+  updatedSettings         Setting[]    @relation("SettingUpdatedBy")
 
   @@map("users")
 }
@@ -302,6 +303,20 @@ model Connect {
   @@index([status])
   @@index([createdById])
   @@map("connect")
+}
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  category    String   @db.VarChar(50) // 'GENERAL' | 'COMPANY'
+  key         String   @unique @db.VarChar(100)
+  value       String?  @db.Text
+  updatedById Int?     @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  updatedBy   User?    @relation("SettingUpdatedBy", fields: [updatedById], references: [id])
+
+  @@map("settings")
 }
 
 model AuditLog {

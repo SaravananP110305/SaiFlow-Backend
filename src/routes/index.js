@@ -11,6 +11,7 @@ import proposalRoutes from './proposal.routes.js';
 import clientRoutes from './client.routes.js';
 import connectRoutes from './connect.routes.js';
 import reportRoutes from './report.routes.js';
+import settingsRoutes from './settings.routes.js';
 
 const router = Router();
 
@@ -49,5 +50,8 @@ router.use('/connect', connectRoutes);
 
 // Analytics & Reports routes
 router.use('/reports', reportRoutes);
+
+// System Settings routes
+router.use('/settings', settingsRoutes);
 
 export default router;
