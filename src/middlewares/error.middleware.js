@@ -1,14 +1,27 @@
 import { StatusCodes } from 'http-status-codes';
+import multer from 'multer';
 import { env } from '../config/env.js';
 import logger from '../config/logger.js';
 import ApiError from '../utils/ApiError.js';
+import { MAX_AVATAR_SIZE } from './upload.middleware.js';
 
 export const errorHandler = (err, req, res, next) => {
   let { statusCode, message } = err;
   const shouldExposeStack = env.isDevelopment && !env.isProduction;
 
-  // If error is not an instance of ApiError, classify it
-  if (!(err instanceof ApiError)) {
+  // Handle multer upload errors (file too large, unexpected field, etc.)
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      statusCode = StatusCodes.REQUEST_TOO_LARGE;
+      message = `File is too large. Maximum allowed size is ${Math.round(MAX_AVATAR_SIZE / (1024 * 1024))} MB.`;
+    } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      message = 'Unexpected file field. Please upload a single image under the "photo" field.';
+    } else {
+      statusCode = StatusCodes.BAD_REQUEST;
+      message = `Upload failed: ${err.message}`;
+    }
+  } else if (!(err instanceof ApiError)) {
     if (err?.code === 'P2002') {
       statusCode = StatusCodes.CONFLICT;
       message = 'A record with the same unique value already exists.';

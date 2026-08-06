@@ -41,6 +41,9 @@ node_modules_noble
 .env.test.local
 .env.production.local
 
+# User-uploaded files
+uploads/
+
 # Service account key files
 *.json
 

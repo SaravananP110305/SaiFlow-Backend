@@ -1,9 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
+import { avatarsDir } from '../middlewares/upload.middleware.js';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -239,6 +242,53 @@ export const updateProfile = async (req, res, next) => {
       })
     );
   } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadProfilePhoto = async (req, res, next) => {
+  let uploadedFilePath = null;
+  try {
+    const file = req.file;
+    if (!file) {
+      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Please select an image to upload'));
+    }
+
+    const userId = req.user.id;
+    uploadedFilePath = path.join(avatarsDir, file.filename);
+
+    const existingUser = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null }
+    });
+
+    if (!existingUser) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'User not found'));
+    }
+
+    const avatarUrl = `/uploads/avatars/${file.filename}`;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      include: { role: true }
+    });
+
+    // Best-effort cleanup of the previously stored avatar file
+    if (existingUser.avatarUrl && existingUser.avatarUrl !== avatarUrl) {
+      const oldFilePath = path.join(avatarsDir, path.basename(existingUser.avatarUrl));
+      fs.unlink(oldFilePath, () => {});
+    }
+
+    res.status(StatusCodes.OK).json(
+      new ApiResponse(StatusCodes.OK, 'Profile photo updated successfully', {
+        user: buildUserPayload(updatedUser)
+      })
+    );
+  } catch (error) {
+    // Remove the just-uploaded file so a failed save does not orphan it
+    if (uploadedFilePath) {
+      fs.unlink(uploadedFilePath, () => {});
+    }
     next(error);
   }
 };

@@ -6,11 +6,13 @@ import {
   getMe,
   getPrivileges,
   updateProfile,
+  uploadProfilePhoto,
   changePassword
 } from '../controllers/auth.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { loginSchema, changePasswordSchema, updateProfileSchema } from '../validators/auth.validator.js';
 import { isAuthenticated } from '../middlewares/auth.middleware.js';
+import { uploadAvatar } from '../middlewares/upload.middleware.js';
 
 const router = Router();
 
@@ -19,6 +21,7 @@ router.put('/refresh', refresh);
 router.delete('/logout', isAuthenticated, logout);
 router.get('/me', isAuthenticated, getMe);
 router.get('/privileges', isAuthenticated, getPrivileges);
+router.patch('/profile/photo', isAuthenticated, uploadAvatar.single('photo'), uploadProfilePhoto);
 router.patch('/profile', isAuthenticated, validate(updateProfileSchema), updateProfile);
 router.patch('/change-password', isAuthenticated, validate(changePasswordSchema), changePassword);
 

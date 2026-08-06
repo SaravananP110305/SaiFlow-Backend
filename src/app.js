@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import hpp from 'hpp';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import logger from './config/logger.js';
@@ -12,9 +14,18 @@ import { notFoundHandler } from './middlewares/notFound.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Secure App with Helmet headers
-app.use(helmet());
+// Secure App with Helmet headers.
+// crossOriginResourcePolicy is set to 'cross-origin' so the frontend origin
+// (e.g. http://localhost:5173) is allowed to load uploaded media such as
+// avatar images served from this API server. The helmet default of
+// 'same-origin' would silently block those cross-origin <img> requests.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+);
 
 // Enable CORS
 app.use(cors({
@@ -49,6 +60,9 @@ app.use(morgan(morganFormat, {
 app.get('/', (req, res) => {
   res.redirect('/api/v1/health');
 });
+
+// Serve uploaded files (avatars, etc.) statically
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // API Routes mounting
 app.use('/api/v1', routes);
