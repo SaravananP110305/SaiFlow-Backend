@@ -55,7 +55,11 @@ export const getConnects = async (req, res, next) => {
 
     const where = { deletedAt: null };
     if (leadId) where.leadId = parseInt(leadId, 10);
-    if (status) where.status = normalizeConnectStatus(status) || status;
+    if (status) {
+      where.status = status.includes(',')
+        ? { in: status.split(',').map((s) => normalizeConnectStatus(s.trim()) || s.trim()) }
+        : (normalizeConnectStatus(status) || status);
+    }
     if (search) {
       where.AND = [
         {

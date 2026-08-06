@@ -23,9 +23,9 @@ export const getMeetings = async (req, res, next) => {
       }),
       ...(search && {
         OR: [
+          { title: { contains: search, mode: 'insensitive' } },
           { lead: { title: { contains: search, mode: 'insensitive' } } },
-          { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-          { lead: { title: { contains: search, mode: 'insensitive' } } }
+          { lead: { contactPerson: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };

@@ -15,7 +15,12 @@ export const getClients = async (req, res, next) => {
       deletedAt: null,
       ...(status && { status }),
       ...(search && {
-        company: { name: { contains: search, mode: 'insensitive' } }
+        OR: [
+          { company: { name: { contains: search, mode: 'insensitive' } } },
+          { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
+          { lead: { email: { contains: search, mode: 'insensitive' } } },
+          { lead: { phone: { contains: search, mode: 'insensitive' } } }
+        ]
       })
     };
 

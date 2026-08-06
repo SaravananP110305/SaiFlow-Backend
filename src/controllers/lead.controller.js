@@ -35,7 +35,11 @@ const buildLeadWhere = (req) => {
 
   const where = {
     deletedAt: null,
-    ...(status && { status: normalizeLeadStatus(status) || status }),
+    ...(status && {
+      status: status.includes(',')
+        ? { in: status.split(',').map((s) => normalizeLeadStatus(s.trim()) || s.trim()) }
+        : (normalizeLeadStatus(status) || status)
+    }),
     ...(sourceId && { sourceId: parseId(sourceId) }),
     ...(priorityId && { priorityId: parseId(priorityId) }),
     ...(assignedToId && { assignedToId: parseId(assignedToId) }),
