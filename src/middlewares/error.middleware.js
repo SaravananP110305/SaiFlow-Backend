@@ -40,7 +40,9 @@ export const errorHandler = (err, req, res, next) => {
 
   if (statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
     logger.error(`[Express Error Handler] ${err.stack || err.message}`);
-  } else {
+  } else if (env.isProduction) {
+    // Expected client errors (4xx) are only logged in production to keep the
+    // development terminal clean.
     logger.warn(`[Client Error] ${statusCode} - ${message} (Path: ${req.originalUrl})`);
   }
 

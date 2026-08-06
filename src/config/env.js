@@ -31,5 +31,7 @@ export const env = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'default-refresh-secret-key-replace-me',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   isProduction: process.env.NODE_ENV === 'production',
-  isDevelopment: process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
+  isDevelopment: process.env.NODE_ENV === 'development' || !process.env.NODE_ENV,
+  // Opt-in SQL query logging for Prisma (set PRISMA_QUERY_LOG=true to enable)
+  logQueries: process.env.PRISMA_QUERY_LOG === 'true'
 };

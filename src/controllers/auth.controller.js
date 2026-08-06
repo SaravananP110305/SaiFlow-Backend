@@ -47,7 +47,10 @@ const storeRefreshToken = async (userId, refreshToken) => {
 };
 
 const clearRefreshSession = (res) => {
-  res.clearCookie('refreshToken', cookieOptions);
+  // No options passed: res.clearCookie() expires the cookie immediately on the
+  // same path it was set ('/'), and passing cookieOptions (which includes
+  // maxAge) here is deprecated by Express.
+  res.clearCookie('refreshToken');
 };
 
 // Cookie configuration helper

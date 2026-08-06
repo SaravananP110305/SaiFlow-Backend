@@ -40,13 +40,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// HTTP Request logging with Morgan & Winston
-const morganFormat = env.isProduction ? 'combined' : 'dev';
-app.use(morgan(morganFormat, {
-  stream: {
-    write: (message) => logger.info(message.trim())
-  }
-}));
+// HTTP Request logging with Morgan & Winston (production only, so the
+// development terminal stays clean)
+if (env.isProduction) {
+  app.use(morgan('combined', {
+    stream: {
+      write: (message) => logger.info(message.trim())
+    }
+  }));
+}
 
 // Base Root Redirect to Health Check
 app.get('/', (req, res) => {
