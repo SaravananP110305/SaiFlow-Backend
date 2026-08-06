@@ -200,6 +200,49 @@ export const getPrivileges = async (req, res, next) => {
   }
 };
 
+export const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { name, email, phone, department } = req.body;
+
+    const existingUser = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null }
+    });
+
+    if (!existingUser) {
+      return next(new ApiError(StatusCodes.NOT_FOUND, 'User not found'));
+    }
+
+    if (email && email !== existingUser.email) {
+      const duplicate = await prisma.user.findFirst({
+        where: { email, id: { not: userId } }
+      });
+      if (duplicate && !duplicate.deletedAt) {
+        return next(new ApiError(StatusCodes.CONFLICT, `Email '${email}' is already in use`));
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+        ...(phone !== undefined && { phone }),
+        ...(department !== undefined && { department })
+      },
+      include: { role: true }
+    });
+
+    res.status(StatusCodes.OK).json(
+      new ApiResponse(StatusCodes.OK, 'Profile updated successfully', {
+        user: buildUserPayload(updatedUser)
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const changePassword = async (req, res, next) => {
   try {
     const userId = req.user.id;

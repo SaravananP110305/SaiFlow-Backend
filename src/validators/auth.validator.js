@@ -18,6 +18,17 @@ export const loginSchema = Joi.object({
     })
 });
 
+export const updateProfileSchema = Joi.object({
+  name: Joi.string().min(2).max(200),
+  email: Joi.string().email().lowercase(),
+  phone: Joi.string().max(20).allow('', null),
+  department: Joi.string().max(100).allow('', null)
+})
+  .min(1)
+  .messages({
+    'object.min': 'At least one field must be provided for update'
+  });
+
 export const changePasswordSchema = Joi.object({
   oldPassword: Joi.string()
     .required()
