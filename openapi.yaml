@@ -1,0 +1,402 @@
+openapi: 3.0.3
+info:
+  title: SaiFlow CRM REST API
+  description: Complete API reference for SaiFlow CRM (Lead & Appointment Management Platform) backend service.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local development server
+paths:
+  /health:
+    get:
+      summary: Get Server Health
+      description: Returns health status of API, database connections, and memory state.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/login:
+    post:
+      summary: Authenticate User
+      description: Verify email/password credentials. Sets a secure HTTP-Only cookie for refresh token rotation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    put:
+      summary: Rotate JWT Session Tokens
+      description: Validates current refreshToken secure cookie and issues a new access token.
+      responses:
+        '200':
+          description: Token rotated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Expired or invalid session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      summary: Get Logged In User Profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user profile object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+
+  /auth/privileges:
+    get:
+      summary: Get User Module Privileges
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User module actions mapping json
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivilegesResponse'
+
+  /users:
+    get:
+      summary: List Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: paginate
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: User list response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+
+    post:
+      summary: Create New User
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse'
+
+  /users/assignees:
+    get:
+      summary: List Assignees
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lightweight list of active users available for assignment
+
+  /leads:
+    get:
+      summary: Fetch Lead Database
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: sourceId
+          in: query
+          schema:
+            type: integer
+        - name: priorityId
+          in: query
+          schema:
+            type: integer
+        - name: assignedToId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Leads retrieve success
+
+    post:
+      summary: Create New Lead
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeadRequest'
+      responses:
+        '201':
+          description: Lead created
+
+  /leads/status-counts:
+    get:
+      summary: Aggregate Status Counts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Counts breakdown per status
+
+  /connect:
+    get:
+      summary: Fetch Follow-up Connect Logs
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Follow-up logs
+    post:
+      summary: Create Contact Log/Follow-up
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConnectRequest'
+      responses:
+        '201':
+          description: Connect log saved
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            uptime:
+              type: number
+            timestamp:
+              type: string
+            env:
+              type: string
+            database:
+              type: string
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        message:
+          type: string
+    MeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: object
+    PrivilegesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        data:
+          type: object
+          properties:
+            role:
+              type: object
+            permissions:
+              type: object
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - roleId
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+        roleId:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED]
+    CreateUserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        data:
+          type: object
+    CreateLeadRequest:
+      type: object
+      required:
+        - title
+        - contactPerson
+        - email
+      properties:
+        title:
+          type: string
+        contactPerson:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        website:
+          type: string
+        status:
+          type: string
+        requirements:
+          type: string
+    CreateConnectRequest:
+      type: object
+      required:
+        - leadId
+      properties:
+        leadId:
+          type: integer
+        outcome:
+          type: string
+        summary:
+          type: string
+        followUpType:
+          type: string
+        followUpDate:
+          type: string
+          format: date
+        followUpTime:
+          type: string
