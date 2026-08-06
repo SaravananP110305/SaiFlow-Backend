@@ -226,8 +226,104 @@ model Proposal {
   requirements   Json?
   estimation     Json?
   quotation      Json?
+  pricing        Json?
+
+  phases         ProposalPhase[]
 
   @@map("proposals")
+}
+
+model ProposalPhase {
+  id               Int      @id @default(autoincrement())
+  proposalId       Int      @map("proposal_id")
+  phaseName        String   @map("phase_name") @db.VarChar(200)
+  overview         String?  @db.Text
+  estimatedTimeline String? @map("estimated_timeline") @db.VarChar(100)
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  proposal            Proposal                         @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  objectives          ProposalPhaseObjective[]
+  technicalRequirements ProposalPhaseTechnicalRequirement[]
+  deliverables        ProposalPhaseDeliverable[]
+  assumptions         ProposalPhaseAssumption[]
+  constraints         ProposalPhaseConstraint[]
+  lineItems           ProposalPhaseLineItem[]
+
+  @@index([proposalId])
+  @@map("proposal_phases")
+}
+
+model ProposalPhaseObjective {
+  id      Int           @id @default(autoincrement())
+  phaseId Int           @map("phase_id")
+  text    String        @db.Text
+
+  phase   ProposalPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("proposal_phase_objectives")
+}
+
+model ProposalPhaseTechnicalRequirement {
+  id      Int           @id @default(autoincrement())
+  phaseId Int           @map("phase_id")
+  text    String        @db.Text
+
+  phase   ProposalPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("proposal_phase_technical_requirements")
+}
+
+model ProposalPhaseDeliverable {
+  id      Int           @id @default(autoincrement())
+  phaseId Int           @map("phase_id")
+  text    String        @db.Text
+
+  phase   ProposalPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("proposal_phase_deliverables")
+}
+
+model ProposalPhaseAssumption {
+  id      Int           @id @default(autoincrement())
+  phaseId Int           @map("phase_id")
+  text    String        @db.Text
+
+  phase   ProposalPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("proposal_phase_assumptions")
+}
+
+model ProposalPhaseConstraint {
+  id      Int           @id @default(autoincrement())
+  phaseId Int           @map("phase_id")
+  text    String        @db.Text
+
+  phase   ProposalPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("proposal_phase_constraints")
+}
+
+model ProposalPhaseLineItem {
+  id          Int           @id @default(autoincrement())
+  phaseId     Int           @map("phase_id")
+  category    String        @db.VarChar(100)
+  description String        @db.Text
+  unitPrice   Decimal       @map("unit_price") @db.Decimal(14, 2)
+  quantity    Int           @default(1)
+  amount      Decimal       @db.Decimal(14, 2)
+  sortOrder   Int           @default(0) @map("sort_order")
+
+  phase       ProposalPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+
+  @@index([phaseId])
+  @@map("proposal_phase_line_items")
 }
 
 model Client {

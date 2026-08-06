@@ -3,6 +3,105 @@ import prisma from '../config/prisma.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+// ─── Phase / Pricing helpers ───────────────────────────────────────────────
+
+const PHASE_INCLUDE = {
+  objectives: { orderBy: { id: 'asc' } },
+  technicalRequirements: { orderBy: { id: 'asc' } },
+  deliverables: { orderBy: { id: 'asc' } },
+  assumptions: { orderBy: { id: 'asc' } },
+  constraints: { orderBy: { id: 'asc' } },
+  lineItems: { orderBy: { sortOrder: 'asc' } }
+};
+
+// Attaches a per-phase `subtotal` and normalizes each line item amount
+// (amount = unitPrice * quantity) so pricing is always server-computed.
+const computePhaseSubtotals = (phases) =>
+  (phases || []).map((p) => {
+    const lineItems = (p.lineItems || []).map((li) => ({
+      ...li,
+      quantity: Number(li.quantity) || 1,
+      unitPrice: round2(li.unitPrice),
+      amount: round2((Number(li.unitPrice) || 0) * (Number(li.quantity) || 1))
+    }));
+    return {
+      ...p,
+      lineItems,
+      subtotal: lineItems.reduce((s, li) => s + li.amount, 0)
+    };
+  });
+
+const computePricing = (phases, discountPercent, taxPercent) => {
+  const subtotal = round2(phases.reduce((s, p) => s + p.subtotal, 0));
+  const discountAmount = round2(subtotal * ((Number(discountPercent) || 0) / 100));
+  const afterDiscount = round2(subtotal - discountAmount);
+  const taxAmount = round2(afterDiscount * ((Number(taxPercent) || 0) / 100));
+  const grandTotal = round2(afterDiscount + taxAmount);
+  return { subtotal, discountPercent: Number(discountPercent) || 0, discountAmount, taxPercent: Number(taxPercent) || 0, taxAmount, grandTotal };
+};
+
+// Flattens all phase line items into the legacy `estimation` JSON shape so
+// existing list/detail/PDF code that reads `estimation` keeps working.
+const buildEstimationJson = (phases, pricing) => ({
+  items: phases.flatMap((p) =>
+    p.lineItems.map((li) => ({
+      id: String(li.id || `li-${Math.random().toString(36).slice(2, 8)}`),
+      category: li.category,
+      description: li.description,
+      unit: li.unit || 'Project',
+      quantity: li.quantity || 1,
+      unitPrice: li.unitPrice,
+      amount: li.amount
+    }))
+  ),
+  subtotal: pricing.subtotal,
+  discountPercent: pricing.discountPercent,
+  discountAmount: pricing.discountAmount,
+  taxPercent: pricing.taxPercent,
+  taxAmount: pricing.taxAmount,
+  total: pricing.grandTotal
+});
+
+const cleanList = (arr) =>
+  (Array.isArray(arr) ? arr : []).map((t) => String(t).trim()).filter((t) => t !== '');
+
+const buildPhaseCreateData = (phases) =>
+  phases.map((p, idx) => ({
+    phaseName: p.phaseName,
+    overview: p.overview || '',
+    estimatedTimeline: p.estimatedTimeline || '',
+    sortOrder: idx,
+    objectives: { create: cleanList(p.objectives).map((text) => ({ text })) },
+    technicalRequirements: { create: cleanList(p.technicalRequirements).map((text) => ({ text })) },
+    deliverables: { create: cleanList(p.deliverables).map((text) => ({ text })) },
+    assumptions: { create: cleanList(p.assumptions).map((text) => ({ text })) },
+    constraints: { create: cleanList(p.constraints).map((text) => ({ text })) },
+    lineItems: {
+      create: (p.lineItems || []).map((li, liIdx) => ({
+        category: li.category,
+        description: li.description,
+        unitPrice: round2(li.unitPrice),
+        quantity: Number(li.quantity) || 1,
+        amount: round2((Number(li.unitPrice) || 0) * (Number(li.quantity) || 1)),
+        sortOrder: liIdx
+      }))
+    }
+  }));
+
+const preparePhasePayload = (body, existing) => {
+  const phases = computePhaseSubtotals(body.phases);
+  const discountPercent = body.discountPercent !== undefined
+    ? body.discountPercent
+    : existing?.estimation?.discountPercent ?? 0;
+  const taxPercent = body.taxPercent !== undefined
+    ? body.taxPercent
+    : existing?.estimation?.taxPercent ?? 0;
+  const pricing = computePricing(phases, discountPercent, taxPercent);
+  return { phases, pricing, estimation: buildEstimationJson(phases, pricing) };
+};
+
 export const getProposals = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
@@ -60,7 +159,11 @@ export const getProposalById = async (req, res, next) => {
       where: { id },
       include: {
         lead: true,
-        createdBy: { select: { id: true, name: true, email: true } }
+        createdBy: { select: { id: true, name: true, email: true } },
+        phases: {
+          include: PHASE_INCLUDE,
+          orderBy: { sortOrder: 'asc' }
+        }
       }
     });
 
@@ -78,7 +181,10 @@ export const getProposalById = async (req, res, next) => {
 
 export const createProposal = async (req, res, next) => {
   try {
-    const { leadId, proposalNumber, title, amount, status, documentUrl, validUntil, requirements, estimation, quotation } = req.body;
+    const {
+      leadId, proposalNumber, title, amount, status, documentUrl, validUntil,
+      requirements, estimation, quotation, phases
+    } = req.body;
     const createdById = req.user.id;
 
     const lead = await prisma.lead.findFirst({ where: { id: leadId, deletedAt: null } });
@@ -108,20 +214,33 @@ export const createProposal = async (req, res, next) => {
       }
     }
 
+    // Compute pricing/amount from phases when supplied (phase-wise mode)
+    let finalAmount = amount;
+    let finalEstimation = estimation || null;
+    let finalPricing = null;
+    const phasePayload = Array.isArray(phases) && phases.length ? preparePhasePayload(req.body) : null;
+    if (phasePayload) {
+      finalAmount = phasePayload.pricing.grandTotal;
+      finalEstimation = phasePayload.estimation;
+      finalPricing = phasePayload.pricing;
+    }
+
     const [proposal] = await prisma.$transaction([
       prisma.proposal.create({
         data: {
           leadId,
           proposalNumber,
           title,
-          amount,
+          amount: finalAmount,
           status: status || 'Draft',
           documentUrl,
           validUntil: validUntil ? new Date(validUntil) : null,
           createdById,
           requirements,
-          estimation,
-          quotation
+          estimation: finalEstimation,
+          quotation,
+          pricing: finalPricing,
+          ...(phasePayload && { phases: { create: buildPhaseCreateData(phasePayload.phases) } })
         },
         include: {
           lead: { select: { id: true, title: true } },
@@ -151,7 +270,10 @@ export const updateProposal = async (req, res, next) => {
       return next(new ApiError(StatusCodes.NOT_FOUND, 'Proposal not found'));
     }
 
-    const { proposalNumber, title, amount, status, documentUrl, validUntil, requirements, estimation, quotation } = req.body;
+    const {
+      proposalNumber, title, amount, status, documentUrl, validUntil,
+      requirements, estimation, quotation, phases
+    } = req.body;
 
     // Check if status is transitioning to Accepted, Approved, or Won
     const isApprovedStatus = (s) => s && ['accepted', 'approved', 'won'].includes(s.toLowerCase());
@@ -179,20 +301,32 @@ export const updateProposal = async (req, res, next) => {
       }
     }
 
-    const updated = await prisma.proposal.update({
-      where: { id },
-      data: {
-        ...(proposalNumber && { proposalNumber }),
-        ...(title && { title }),
-        ...(amount !== undefined && { amount }),
-        ...(status && { status }),
-        ...(documentUrl !== undefined && { documentUrl }),
-        ...(validUntil !== undefined && { validUntil: validUntil ? new Date(validUntil) : null }),
-        ...(requirements !== undefined && { requirements }),
-        ...(estimation !== undefined && { estimation }),
-        ...(quotation !== undefined && { quotation })
-      }
-    });
+    // Recompute pricing/amount from phases when supplied (phase-wise mode)
+    const phasePayload = Array.isArray(phases) && phases.length ? preparePhasePayload(req.body, existing) : null;
+    const finalAmount = phasePayload ? phasePayload.pricing.grandTotal : amount;
+    const finalEstimation = phasePayload ? phasePayload.estimation : estimation;
+    const finalPricing = phasePayload ? phasePayload.pricing : undefined;
+
+    const data = {
+      ...(proposalNumber && { proposalNumber }),
+      ...(title && { title }),
+      ...(finalAmount !== undefined && { amount: finalAmount }),
+      ...(status && { status }),
+      ...(documentUrl !== undefined && { documentUrl }),
+      ...(validUntil !== undefined && { validUntil: validUntil ? new Date(validUntil) : null }),
+      ...(requirements !== undefined && { requirements }),
+      ...(finalEstimation !== undefined && { estimation: finalEstimation }),
+      ...(quotation !== undefined && { quotation }),
+      ...(finalPricing !== undefined && { pricing: finalPricing }),
+      ...(phasePayload && { phases: { create: buildPhaseCreateData(phasePayload.phases) } })
+    };
+
+    const updated = phasePayload
+      ? (await prisma.$transaction([
+          prisma.proposalPhase.deleteMany({ where: { proposalId: id } }),
+          prisma.proposal.update({ where: { id }, data })
+        ]))[1]
+      : await prisma.proposal.update({ where: { id }, data });
 
     // Auto-advance lead status to WON if proposal status is marked Accepted or Won
     if (status && (status.toLowerCase() === 'accepted' || status.toLowerCase() === 'won')) {
