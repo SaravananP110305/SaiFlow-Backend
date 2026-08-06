@@ -22,7 +22,8 @@ async function main() {
         companies: ['view', 'create', 'edit', 'delete'],
         reports: ['view'],
         connect: ['view', 'create', 'edit', 'delete'],
-        settings: ['view', 'edit']
+        settings: ['view', 'edit'],
+        notifications: ['view']
       }
     },
     {
@@ -38,7 +39,8 @@ async function main() {
         companies: ['view', 'create', 'edit', 'delete'],
         reports: ['view'],
         connect: ['view', 'create', 'edit'],
-        settings: ['view']
+        settings: ['view'],
+        notifications: ['view']
       }
     },
     {
@@ -54,7 +56,8 @@ async function main() {
         companies: ['view', 'create', 'edit'],
         reports: [],
         connect: ['view', 'create', 'edit'],
-        settings: ['view']
+        settings: ['view'],
+        notifications: ['view']
       }
     },
     {
@@ -70,7 +73,8 @@ async function main() {
         companies: ['view'],
         reports: [],
         connect: ['view'],
-        settings: ['view']
+        settings: ['view'],
+        notifications: ['view']
       }
     }
   ];
@@ -192,6 +196,71 @@ async function main() {
     });
   }
   console.log('System settings seeded.');
+
+  // 5. Seed Sample Notifications
+  console.log('Seeding notifications...');
+  const existingNotifications = await prisma.notification.count();
+  if (existingNotifications === 0) {
+    const sourceUser = await prisma.user.findFirst({ where: { email: adminEmail } });
+    const sourceName = sourceUser?.name || 'System Administrator';
+
+    const wonLead = await prisma.lead.findFirst({
+      where: { status: 'WON', deletedAt: null },
+      select: { title: true }
+    });
+    const scheduledMeeting = await prisma.meeting.findFirst({
+      where: { status: 'SCHEDULED' },
+      include: { lead: { select: { title: true } } }
+    });
+    const followUpConnect = await prisma.connect.findFirst({
+      where: { status: 'SCHEDULED', deletedAt: null },
+      select: { company: true }
+    });
+    const assignedLead = await prisma.lead.findFirst({
+      where: { assignedToId: { not: null }, deletedAt: null },
+      select: { title: true }
+    });
+
+    const defaultNotifications = [
+      {
+        userName: sourceName,
+        message: 'marked lead status as WON for',
+        targetName: wonLead?.title || 'Google',
+        category: 'Lead'
+      },
+      {
+        userName: sourceName,
+        message: 'scheduled a presales meeting with',
+        targetName: scheduledMeeting?.lead.title || 'Salesforce CRM',
+        category: 'Meeting'
+      },
+      {
+        userName: sourceName,
+        message: 'logged a successful follow-up with',
+        targetName: followUpConnect?.company || 'Stripe Payment',
+        category: 'Follow-up'
+      },
+      {
+        userName: 'System Auto',
+        message: 'imported new qualified leads from',
+        targetName: 'Leads_Q3_Upload.xlsx',
+        category: 'System'
+      },
+      {
+        userName: sourceName,
+        message: 'assigned a new lead to',
+        targetName: assignedLead?.title || 'Netflix Stream',
+        category: 'Lead'
+      }
+    ];
+
+    await prisma.notification.createMany({
+      data: defaultNotifications
+    });
+    console.log('Notifications seeded.');
+  } else {
+    console.log('Notifications already exist; skipping seed.');
+  }
 
   console.log('🏁 Seeding completed successfully!');
 }

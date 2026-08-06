@@ -12,6 +12,7 @@ import clientRoutes from './client.routes.js';
 import connectRoutes from './connect.routes.js';
 import reportRoutes from './report.routes.js';
 import settingsRoutes from './settings.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -53,5 +54,8 @@ router.use('/reports', reportRoutes);
 
 // System Settings routes
 router.use('/settings', settingsRoutes);
+
+// Notification routes
+router.use('/notifications', notificationRoutes);
 
 export default router;

@@ -319,6 +319,21 @@ model Setting {
   @@map("settings")
 }
 
+model Notification {
+  id         Int      @id @default(autoincrement())
+  userName   String   @map("user_name") @db.VarChar(150)
+  message    String   @db.VarChar(255)
+  targetName String   @map("target_name") @db.VarChar(255)
+  category   String   @default("System") @db.VarChar(30) // 'Lead' | 'Meeting' | 'Follow-up' | 'System'
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
 model AuditLog {
   id        BigInt   @id @default(autoincrement())
   userId    Int?     @map("user_id")
