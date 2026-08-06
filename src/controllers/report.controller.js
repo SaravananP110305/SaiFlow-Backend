@@ -30,6 +30,7 @@ export const getDashboardSummary = async (req, res, next) => {
       wonLeads,
       scheduledMeetings,
       openProposals,
+      activeClients,
       revenueAggregate
     ] = await Promise.all([
       prisma.lead.count({ where: { deletedAt: null } }),
@@ -37,6 +38,7 @@ export const getDashboardSummary = async (req, res, next) => {
       prisma.lead.count({ where: { deletedAt: null, status: 'WON' } }),
       prisma.meeting.count({ where: { status: 'SCHEDULED' } }),
       prisma.proposal.count({ where: { status: 'Sent' } }),
+      prisma.client.count({ where: { deletedAt: null } }),
       prisma.proposal.aggregate({
         where: { status: { in: ['Accepted', 'Won'] } },
         _sum: { amount: true }
@@ -52,12 +54,85 @@ export const getDashboardSummary = async (req, res, next) => {
       wonLeads,
       scheduledMeetings,
       openProposals,
+      activeClients,
       totalWonRevenue,
       conversionRate: `${conversionRate}%`
     };
 
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Dashboard KPIs retrieved successfully', summary)
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// Dashboard charts (lead trend + conversion), aggregated by month
+// ──────────────────────────────────────────────────────────────────────────
+
+const MONTH_LABEL_FORMAT = new Intl.DateTimeFormat('en-US', { month: 'short' });
+
+const buildMonthBuckets = (count) => {
+  const buckets = [];
+  const now = new Date();
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    buckets.push({ key, label: MONTH_LABEL_FORMAT.format(d) });
+  }
+  return buckets;
+};
+
+export const getDashboardCharts = async (req, res, next) => {
+  try {
+    const leadBuckets = buildMonthBuckets(12);
+    const conversionBuckets = leadBuckets.slice(-6);
+
+    const startDate = new Date(leadBuckets[0].key);
+
+    const [leadRows, conversionRows] = await Promise.all([
+      prisma.$queryRaw`
+        SELECT to_char(created_at, 'YYYY-MM') AS month, COUNT(*)::int AS count
+        FROM leads
+        WHERE deleted_at IS NULL AND created_at >= ${startDate}
+        GROUP BY month
+        ORDER BY month ASC
+      `,
+      prisma.$queryRaw`
+        SELECT to_char(created_at, 'YYYY-MM') AS month, status, COUNT(*)::int AS count
+        FROM leads
+        WHERE deleted_at IS NULL
+          AND status IN ('WON', 'LOST')
+          AND created_at >= ${startDate}
+        GROUP BY month, status
+        ORDER BY month ASC
+      `
+    ]);
+
+    const leadCountByMonth = new Map(leadRows.map((r) => [r.month, Number(r.count) || 0]));
+    const wonByMonth = new Map();
+    const lostByMonth = new Map();
+    for (const row of conversionRows) {
+      const count = Number(row.count) || 0;
+      if (row.status === 'WON') wonByMonth.set(row.month, count);
+      if (row.status === 'LOST') lostByMonth.set(row.month, count);
+    }
+
+    const chartData = {
+      leadTrend: {
+        categories: leadBuckets.map((b) => b.label),
+        series: leadBuckets.map((b) => leadCountByMonth.get(b.key) || 0)
+      },
+      conversion: {
+        categories: conversionBuckets.map((b) => b.label),
+        won: conversionBuckets.map((b) => wonByMonth.get(b.key) || 0),
+        lost: conversionBuckets.map((b) => lostByMonth.get(b.key) || 0)
+      }
+    };
+
+    res.status(StatusCodes.OK).json(
+      new ApiResponse(StatusCodes.OK, 'Dashboard charts retrieved successfully', chartData)
     );
   } catch (error) {
     next(error);

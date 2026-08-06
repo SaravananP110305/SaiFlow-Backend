@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getDashboardSummary,
+  getDashboardCharts,
   getLeadReport,
   getMeetingReport,
   getEmployeeReport,
@@ -16,6 +17,7 @@ const router = Router();
 router.use(isAuthenticated);
 
 router.get('/dashboard-summary', getDashboardSummary);
+router.get('/dashboard-charts', getDashboardCharts);
 router.get('/leads', requirePermission('reports', 'view'), getLeadReport);
 router.get('/meetings', requirePermission('reports', 'view'), getMeetingReport);
 router.get('/employees', requirePermission('reports', 'view'), getEmployeeReport);
