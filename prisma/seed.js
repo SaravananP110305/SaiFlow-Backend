@@ -12,7 +12,7 @@ const getDateOffset = (days, hours = 0) => {
 };
 
 async function main() {
-  console.log('🌱 Starting database seeding (Expanded Dataset)...');
+  console.log('🌱 Starting database seeding (Expanded Dataset with Full Master Config)...');
 
   // ─── 1. Roles ─────────────────────────────────────────────────────────────
   console.log('Seeding roles...');
@@ -165,14 +165,18 @@ async function main() {
     PRIORITY: ['Low', 'Medium', 'High', 'Urgent'],
     SERVICE: ['Web Development', 'Mobile Application', 'UI/UX Design', 'DevOps Setup', 'QA Automation', 'Dedicated Support', 'Cyber Security Audit'],
     PAYMENT_TYPE: ['Milestone Based', 'Time and Materials', 'Fixed Cost', 'Monthly Retainer'],
-    TECH_STACK: ['React', 'Node.js', 'PostgreSQL', 'Flutter', 'AWS', 'Next.js', 'Python', 'Vue.js', 'Docker', 'Kubernetes']
+    TECH_STACK: ['React', 'Node.js', 'PostgreSQL', 'Flutter', 'AWS', 'Next.js', 'Python', 'Vue.js', 'Docker', 'Kubernetes'],
+    DEPARTMENT: ['Sales', 'Marketing', 'Pre-Sales', 'Engineering', 'Human Resources', 'Operations', 'Finance'],
+    DESIGNATION: ['Business Development Executive', 'Business Development Manager', 'Presales Consultant', 'Technical Lead', 'Project Manager', 'Software Engineer', 'Senior Software Engineer', 'QA Analyst'],
+    INDUSTRY: ['Information Technology', 'Healthcare', 'Finance & Banking', 'Retail & E-commerce', 'Logistics & Supply Chain', 'Education & E-learning', 'Automotive'],
+    COMPANY_TYPE: ['Enterprise', 'Mid-Market', 'Startup', 'Government', 'Non-Profit'],
+    FOLLOWUP_TYPE: ['Call', 'Email', 'In-Person Meeting', 'Online Meeting', 'WhatsApp Message', 'LinkedIn Message']
   };
 
   const masterCache = {};
   for (const [cat, items] of Object.entries(categories)) {
     masterCache[cat] = [];
     for (const name of items) {
-      // Find or create
       let item = await prisma.masterItem.findFirst({ where: { category: cat, name } });
       if (!item) {
         item = await prisma.masterItem.create({ data: { category: cat, name, status: 'Active' } });
@@ -201,6 +205,42 @@ async function main() {
       ],
       skipDuplicates: true
     });
+
+    const stateKarnataka = await prisma.masterItem.findFirst({ where: { category: 'STATE', name: 'Karnataka' } });
+    if (stateKarnataka) {
+      await prisma.masterItem.createMany({
+        data: [
+          { category: 'CITY', name: 'Bangalore', parentId: stateKarnataka.id, status: 'Active' },
+          { category: 'CITY', name: 'Mysore', parentId: stateKarnataka.id, status: 'Active' },
+          { category: 'CITY', name: 'Hubli', parentId: stateKarnataka.id, status: 'Active' }
+        ],
+        skipDuplicates: true
+      });
+    }
+
+    const stateMaharashtra = await prisma.masterItem.findFirst({ where: { category: 'STATE', name: 'Maharashtra' } });
+    if (stateMaharashtra) {
+      await prisma.masterItem.createMany({
+        data: [
+          { category: 'CITY', name: 'Mumbai', parentId: stateMaharashtra.id, status: 'Active' },
+          { category: 'CITY', name: 'Pune', parentId: stateMaharashtra.id, status: 'Active' },
+          { category: 'CITY', name: 'Nagpur', parentId: stateMaharashtra.id, status: 'Active' }
+        ],
+        skipDuplicates: true
+      });
+    }
+
+    const stateTamilNadu = await prisma.masterItem.findFirst({ where: { category: 'STATE', name: 'Tamil Nadu' } });
+    if (stateTamilNadu) {
+      await prisma.masterItem.createMany({
+        data: [
+          { category: 'CITY', name: 'Chennai', parentId: stateTamilNadu.id, status: 'Active' },
+          { category: 'CITY', name: 'Coimbatore', parentId: stateTamilNadu.id, status: 'Active' },
+          { category: 'CITY', name: 'Madurai', parentId: stateTamilNadu.id, status: 'Active' }
+        ],
+        skipDuplicates: true
+      });
+    }
   }
 
   const countryUS = await prisma.masterItem.findFirst({ where: { category: 'COUNTRY', name: 'United States' } });
@@ -212,6 +252,30 @@ async function main() {
       ],
       skipDuplicates: true
     });
+
+    const stateCalifornia = await prisma.masterItem.findFirst({ where: { category: 'STATE', name: 'California' } });
+    if (stateCalifornia) {
+      await prisma.masterItem.createMany({
+        data: [
+          { category: 'CITY', name: 'Los Angeles', parentId: stateCalifornia.id, status: 'Active' },
+          { category: 'CITY', name: 'San Francisco', parentId: stateCalifornia.id, status: 'Active' },
+          { category: 'CITY', name: 'San Diego', parentId: stateCalifornia.id, status: 'Active' }
+        ],
+        skipDuplicates: true
+      });
+    }
+
+    const stateNewYork = await prisma.masterItem.findFirst({ where: { category: 'STATE', name: 'New York' } });
+    if (stateNewYork) {
+      await prisma.masterItem.createMany({
+        data: [
+          { category: 'CITY', name: 'New York City', parentId: stateNewYork.id, status: 'Active' },
+          { category: 'CITY', name: 'Buffalo', parentId: stateNewYork.id, status: 'Active' },
+          { category: 'CITY', name: 'Rochester', parentId: stateNewYork.id, status: 'Active' }
+        ],
+        skipDuplicates: true
+      });
+    }
   }
 
   const sourceWebsite = masterCache.LEAD_SOURCE.find(i => i.name === 'Website');
