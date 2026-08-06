@@ -36,9 +36,8 @@ const phaseSchema = Joi.object({
 const phasesSchema = Joi.array().items(phaseSchema);
 
 export const createProposalSchema = Joi.object({
-  leadId: Joi.number().integer().positive().required().messages({
-    'any.required': 'Lead ID is required'
-  }),
+  leadId: Joi.number().integer().positive().allow(null),
+  clientId: Joi.number().integer().positive().allow(null),
   proposalNumber: Joi.string().max(50).required().messages({
     'any.required': 'Proposal number is required'
   }),
@@ -58,9 +57,13 @@ export const createProposalSchema = Joi.object({
   discountPercent: Joi.number().precision(2).min(0).max(100).default(0),
   taxPercent: Joi.number().precision(2).min(0).max(100).default(0),
   phases: phasesSchema.optional()
+}).or('leadId', 'clientId').messages({
+  'object.missing': 'Either Lead ID or Client ID must be specified'
 });
 
 export const updateProposalSchema = Joi.object({
+  leadId: Joi.number().integer().positive().allow(null),
+  clientId: Joi.number().integer().positive().allow(null),
   proposalNumber: Joi.string().max(50),
   title: Joi.string().min(2).max(255),
   amount: Joi.number().precision(2).min(0),

@@ -108,10 +108,11 @@ export const getProposals = async (req, res, next) => {
     const limit = parseInt(req.query.limit || '10', 10);
     const skip = (page - 1) * limit;
 
-    const { leadId, status, createdById, search } = req.query;
+    const { leadId, clientId, status, createdById, search } = req.query;
 
     const where = {
       ...(leadId && { leadId: parseInt(leadId, 10) }),
+      ...(clientId && { clientId: parseInt(clientId, 10) }),
       ...(status && { status }),
       ...(createdById && { createdById: parseInt(createdById, 10) }),
       ...(search && {
@@ -120,7 +121,7 @@ export const getProposals = async (req, res, next) => {
           { proposalNumber: { contains: search, mode: 'insensitive' } },
           { lead: { title: { contains: search, mode: 'insensitive' } } },
           { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-          { lead: { title: { contains: search, mode: 'insensitive' } } }
+          { client: { company: { name: { contains: search, mode: 'insensitive' } } } }
         ]
       })
     };
@@ -131,6 +132,7 @@ export const getProposals = async (req, res, next) => {
         where,
         include: {
           lead: { select: { id: true, title: true, contactPerson: true, email: true, phone: true, status: true } },
+          client: { include: { company: { select: { name: true } } } },
           createdBy: { select: { id: true, name: true, email: true } }
         },
         orderBy: { createdAt: 'desc' },
@@ -159,6 +161,7 @@ export const getProposalById = async (req, res, next) => {
       where: { id },
       include: {
         lead: true,
+        client: { include: { company: true } },
         createdBy: { select: { id: true, name: true, email: true } },
         phases: {
           include: PHASE_INCLUDE,
@@ -182,14 +185,23 @@ export const getProposalById = async (req, res, next) => {
 export const createProposal = async (req, res, next) => {
   try {
     const {
-      leadId, proposalNumber, title, amount, status, documentUrl, validUntil,
+      leadId, clientId, proposalNumber, title, amount, status, documentUrl, validUntil,
       requirements, estimation, quotation, phases
     } = req.body;
     const createdById = req.user.id;
 
-    const lead = await prisma.lead.findFirst({ where: { id: leadId, deletedAt: null } });
-    if (!lead) {
-      return next(new ApiError(StatusCodes.BAD_REQUEST, 'Associated lead does not exist'));
+    if (leadId) {
+      const lead = await prisma.lead.findFirst({ where: { id: leadId, deletedAt: null } });
+      if (!lead) {
+        return next(new ApiError(StatusCodes.BAD_REQUEST, 'Associated lead does not exist'));
+      }
+    }
+
+    if (clientId) {
+      const client = await prisma.client.findFirst({ where: { id: clientId, deletedAt: null } });
+      if (!client) {
+        return next(new ApiError(StatusCodes.BAD_REQUEST, 'Associated client does not exist'));
+      }
     }
 
     const existingNumber = await prisma.proposal.findUnique({ where: { proposalNumber } });
@@ -225,10 +237,11 @@ export const createProposal = async (req, res, next) => {
       finalPricing = phasePayload.pricing;
     }
 
-    const [proposal] = await prisma.$transaction([
+    const transactionQueries = [
       prisma.proposal.create({
         data: {
-          leadId,
+          leadId: leadId || null,
+          clientId: clientId || null,
           proposalNumber,
           title,
           amount: finalAmount,
@@ -244,14 +257,22 @@ export const createProposal = async (req, res, next) => {
         },
         include: {
           lead: { select: { id: true, title: true } },
+          client: { include: { company: true } },
           createdBy: { select: { id: true, name: true } }
         }
-      }),
-      prisma.lead.update({
-        where: { id: leadId },
-        data: { status: 'PROPOSAL' }
       })
-    ]);
+    ];
+
+    if (leadId) {
+      transactionQueries.push(
+        prisma.lead.update({
+          where: { id: leadId },
+          data: { status: 'PROPOSAL' }
+        })
+      );
+    }
+
+    const [proposal] = await prisma.$transaction(transactionQueries);
 
     res.status(StatusCodes.CREATED).json(
       new ApiResponse(StatusCodes.CREATED, 'Proposal created successfully', proposal)
@@ -329,7 +350,7 @@ export const updateProposal = async (req, res, next) => {
       : await prisma.proposal.update({ where: { id }, data });
 
     // Auto-advance lead status to WON if proposal status is marked Accepted or Won
-    if (status && (status.toLowerCase() === 'accepted' || status.toLowerCase() === 'won')) {
+    if (status && (status.toLowerCase() === 'accepted' || status.toLowerCase() === 'won') && existing.leadId) {
       await prisma.lead.update({
         where: { id: existing.leadId },
         data: { status: 'WON' }

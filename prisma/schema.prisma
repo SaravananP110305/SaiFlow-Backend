@@ -209,7 +209,8 @@ model Meeting {
 
 model Proposal {
   id             Int       @id @default(autoincrement())
-  leadId         Int       @map("lead_id")
+  leadId         Int?      @map("lead_id")
+  clientId       Int?      @map("client_id")
   proposalNumber String    @unique @map("proposal_number") @db.VarChar(50)
   title          String    @db.VarChar(255)
   amount         Decimal   @db.Decimal(14, 2)
@@ -220,7 +221,8 @@ model Proposal {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead           Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  client         Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdBy      User      @relation("CreatedProposals", fields: [createdById], references: [id])
 
   requirements   Json?
@@ -347,6 +349,7 @@ model Client {
   relationshipManager User?   @relation("ClientRelationshipManager", fields: [relationshipManagerId], references: [id])
   accountManager      User?   @relation("ClientAccountManager", fields: [accountManagerId], references: [id])
   projects            Project[]
+  proposals           Proposal[]
 
   @@map("clients")
 }
