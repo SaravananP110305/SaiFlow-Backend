@@ -16,15 +16,17 @@ import {
   updateMeetingStatusSchema
 } from '../validators/meeting.validator.js';
 
+import { bodyToQuery } from '../middlewares/bodyToQuery.middleware.js';
+
 const router = Router();
 
 router.use(isAuthenticated);
 
-router.get('/', requirePermission('meetings', 'view'), getMeetings);
-router.get('/:id', requirePermission('meetings', 'view'), getMeetingById);
-router.post('/', requirePermission('meetings', 'create'), validate(createMeetingSchema), createMeeting);
-router.put('/:id', requirePermission('meetings', 'edit'), validate(updateMeetingSchema), updateMeeting);
-router.patch('/:id', requirePermission('meetings', 'edit'), validate(updateMeetingStatusSchema), updateMeetingStatus);
-router.delete('/:id', requirePermission('meetings', 'delete'), deleteMeeting);
+router.post('/get-meeting', requirePermission('meetings', 'view'), bodyToQuery, getMeetings);
+router.get('/get-meeting/:id', requirePermission('meetings', 'view'), getMeetingById);
+router.post('/create-meeting', requirePermission('meetings', 'create'), validate(createMeetingSchema), createMeeting);
+router.put('/update-meeting/:id', requirePermission('meetings', 'edit'), validate(updateMeetingSchema), updateMeeting);
+router.patch('/update-meeting-status/:id', requirePermission('meetings', 'edit'), validate(updateMeetingStatusSchema), updateMeetingStatus);
+router.delete('/delete-meeting/:id', requirePermission('meetings', 'delete'), deleteMeeting);
 
 export default router;

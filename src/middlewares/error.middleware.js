@@ -33,7 +33,6 @@ export const errorHandler = (err, req, res, next) => {
 
   const response = {
     success: false,
-    statusCode,
     message,
     ...(shouldExposeStack && { stack: err.stack })
   };

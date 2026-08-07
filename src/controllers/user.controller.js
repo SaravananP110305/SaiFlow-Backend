@@ -33,12 +33,7 @@ export const getUsers = async (req, res, next) => {
           name: true,
           email: true,
           phone: true,
-          avatarUrl: true,
-          department: true,
           status: true,
-          roleId: true,
-          createdAt: true,
-          updatedAt: true,
           role: {
             select: {
               id: true,
@@ -83,13 +78,17 @@ export const getUserById = async (req, res, next) => {
         name: true,
         email: true,
         phone: true,
-        avatarUrl: true,
-        department: true,
         status: true,
         roleId: true,
+        department: true,
         createdAt: true,
-        updatedAt: true,
-        role: true
+        role: {
+          select: {
+            id: true,
+            name: true,
+            status: true
+          }
+        }
       }
     });
 
@@ -154,7 +153,7 @@ export const createUser = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'User created successfully', newUser)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -228,7 +227,7 @@ export const updateUser = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'User updated successfully', updatedUser)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -262,7 +261,7 @@ export const deleteUser = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'User deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);

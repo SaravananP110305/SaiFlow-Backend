@@ -82,9 +82,19 @@ export const getConnects = async (req, res, next) => {
       prisma.connect.count({ where }),
       prisma.connect.findMany({
         where,
-        include: {
-          lead: { select: { id: true, title: true, status: true } },
-          createdBy: { select: { id: true, name: true } }
+        select: {
+          id: true,
+          leadId: true,
+          company: true,
+          contactPerson: true,
+          phone: true,
+          assignedTo: true,
+          followUpDate: true,
+          followUpTime: true,
+          summary: true,
+          status: true,
+          followUpType: true,
+          outcome: true
         },
         orderBy: [{ followUpDate: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
         skip,
@@ -165,7 +175,7 @@ export const createConnect = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Connect record created successfully', connect)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -226,7 +236,7 @@ export const updateConnect = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Connect record updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);

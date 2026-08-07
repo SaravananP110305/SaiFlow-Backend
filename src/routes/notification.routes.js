@@ -7,12 +7,14 @@ import {
 import { isAuthenticated } from '../middlewares/auth.middleware.js';
 import { requirePermission } from '../middlewares/rbac.middleware.js';
 
+import { bodyToQuery } from '../middlewares/bodyToQuery.middleware.js';
+
 const router = Router();
 
 router.use(isAuthenticated);
 
-router.get('/', requirePermission('notifications', 'view'), getNotifications);
-router.patch('/read-all', requirePermission('notifications', 'view'), markAllAsRead);
-router.patch('/:id/read', requirePermission('notifications', 'view'), markAsRead);
+router.post('/get-notification', requirePermission('notifications', 'view'), bodyToQuery, getNotifications);
+router.put('/update-notification-all/read', requirePermission('notifications', 'view'), markAllAsRead);
+router.put('/update-notification-read/:id', requirePermission('notifications', 'view'), markAsRead);
 
 export default router;

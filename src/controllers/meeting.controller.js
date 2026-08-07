@@ -66,8 +66,21 @@ export const getMeetingById = async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const meeting = await prisma.meeting.findUnique({
       where: { id },
-      include: {
-        lead: true,
+      select: {
+        id: true,
+        leadId: true,
+        title: true,
+        scheduledAt: true,
+        durationMinutes: true,
+        meetingLink: true,
+        status: true,
+        agenda: true,
+        scopeNotes: true,
+        actionSummary: true,
+        createdAt: true,
+        lead: {
+          select: { id: true, title: true, contactPerson: true, email: true, phone: true, status: true }
+        },
         createdBy: {
           select: { id: true, name: true, email: true }
         }
@@ -123,7 +136,7 @@ export const createMeeting = async (req, res, next) => {
     ]);
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Meeting scheduled successfully', meeting)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -159,7 +172,7 @@ export const updateMeeting = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Meeting updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -213,7 +226,7 @@ export const deleteMeeting = async (req, res, next) => {
     await prisma.meeting.delete({ where: { id } });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Meeting deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);

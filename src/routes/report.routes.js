@@ -12,17 +12,19 @@ import {
 import { isAuthenticated } from '../middlewares/auth.middleware.js';
 import { requirePermission } from '../middlewares/rbac.middleware.js';
 
+import { bodyToQuery } from '../middlewares/bodyToQuery.middleware.js';
+
 const router = Router();
 
 router.use(isAuthenticated);
 
-router.get('/dashboard-summary', getDashboardSummary);
-router.get('/dashboard-charts', getDashboardCharts);
-router.get('/leads', requirePermission('reports', 'view'), getLeadReport);
-router.get('/meetings', requirePermission('reports', 'view'), getMeetingReport);
-router.get('/employees', requirePermission('reports', 'view'), getEmployeeReport);
-router.get('/clients', requirePermission('reports', 'view'), getClientReport);
-router.get('/proposals', requirePermission('reports', 'view'), getProposalReport);
-router.get('/follow-ups', requirePermission('reports', 'view'), getFollowUpReport);
+router.post('/get-report-dashboard-summary', bodyToQuery, getDashboardSummary);
+router.post('/get-report-dashboard-charts', bodyToQuery, getDashboardCharts);
+router.post('/get-report-lead', requirePermission('reports', 'view'), bodyToQuery, getLeadReport);
+router.post('/get-report-meeting', requirePermission('reports', 'view'), bodyToQuery, getMeetingReport);
+router.post('/get-report-employee', requirePermission('reports', 'view'), bodyToQuery, getEmployeeReport);
+router.post('/get-report-customer', requirePermission('reports', 'view'), bodyToQuery, getClientReport);
+router.post('/get-report-proposal', requirePermission('reports', 'view'), bodyToQuery, getProposalReport);
+router.post('/get-report-follow-up', requirePermission('reports', 'view'), bodyToQuery, getFollowUpReport);
 
 export default router;

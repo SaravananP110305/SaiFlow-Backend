@@ -14,14 +14,16 @@ import {
   updateProposalSchema
 } from '../validators/proposal.validator.js';
 
+import { bodyToQuery } from '../middlewares/bodyToQuery.middleware.js';
+
 const router = Router();
 
 router.use(isAuthenticated);
 
-router.get('/', requirePermission('proposals', 'view'), getProposals);
-router.get('/:id', requirePermission('proposals', 'view'), getProposalById);
-router.post('/', requirePermission('proposals', 'create'), validate(createProposalSchema), createProposal);
-router.put('/:id', requirePermission('proposals', 'edit'), validate(updateProposalSchema), updateProposal);
-router.delete('/:id', requirePermission('proposals', 'delete'), deleteProposal);
+router.post('/get-proposal', requirePermission('proposals', 'view'), bodyToQuery, getProposals);
+router.get('/get-proposal/:id', requirePermission('proposals', 'view'), getProposalById);
+router.post('/create-proposal', requirePermission('proposals', 'create'), validate(createProposalSchema), createProposal);
+router.put('/update-proposal/:id', requirePermission('proposals', 'edit'), validate(updateProposalSchema), updateProposal);
+router.delete('/delete-proposal/:id', requirePermission('proposals', 'delete'), deleteProposal);
 
 export default router;

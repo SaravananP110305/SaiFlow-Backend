@@ -79,7 +79,7 @@ export const updateSettings = async (req, res, next) => {
     }
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Settings updated successfully', flat)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);

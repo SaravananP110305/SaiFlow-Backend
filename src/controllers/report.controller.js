@@ -276,10 +276,17 @@ export const getLeadReport = async (req, res, next) => {
     const [leads, sourceItems] = await Promise.all([
       prisma.lead.findMany({
         where,
-        include: {
-          source: { select: { id: true, name: true } },
-          industry: { select: { id: true, name: true } },
-          assignedTo: { select: { id: true, name: true } }
+        select: {
+          id: true,
+          title: true,
+          contactPerson: true,
+          email: true,
+          phone: true,
+          status: true,
+          createdAt: true,
+          source: { select: { name: true } },
+          industry: { select: { name: true } },
+          assignedTo: { select: { name: true } }
         }
       }),
       prisma.masterItem.findMany({
@@ -696,7 +703,20 @@ export const getFollowUpReport = async (req, res, next) => {
       where.AND = andConditions;
     }
 
-    const connects = await prisma.connect.findMany({ where });
+    const connects = await prisma.connect.findMany({
+      where,
+      select: {
+        id: true,
+        company: true,
+        contactPerson: true,
+        followUpDate: true,
+        followUpTime: true,
+        followUpType: true,
+        status: true,
+        outcome: true,
+        assignedTo: true
+      }
+    });
 
     const sorted = sortRows(connects, FOLLOWUP_SORT_FIELDS[sortBy], sortOrder);
     const { data, total, totalPages } = paginateRows(sorted, page, limit);

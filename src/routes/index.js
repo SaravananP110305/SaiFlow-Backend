@@ -23,39 +23,39 @@ router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 
 // Role & Permission Management routes
-router.use('/roles', roleRoutes);
+router.use('/', roleRoutes);
 
 // User Management routes
-router.use('/users', userRoutes);
+router.use('/', userRoutes);
 
 // Master Data Management routes
-router.use('/master-items', masterRoutes);
+router.use('/', masterRoutes);
 
 // Company Management routes
-router.use('/companies', companyRoutes);
+router.use('/', companyRoutes);
 
 // Lead Management routes
-router.use('/leads', leadRoutes);
+router.use('/', leadRoutes);
 
 // Meeting Management routes
-router.use('/meetings', meetingRoutes);
+router.use('/', meetingRoutes);
 
 // Proposal Management routes
-router.use('/proposals', proposalRoutes);
+router.use('/', proposalRoutes);
 
 // Client & Project Handover routes
-router.use('/clients', clientRoutes);
+router.use('/', clientRoutes);
 
 // Contact & Follow-up (Connect) routes
-router.use('/connect', connectRoutes);
+router.use('/', connectRoutes);
 
 // Analytics & Reports routes
-router.use('/reports', reportRoutes);
+router.use('/', reportRoutes);
 
 // System Settings routes
-router.use('/settings', settingsRoutes);
+router.use('/', settingsRoutes);
 
 // Notification routes
-router.use('/notifications', notificationRoutes);
+router.use('/', notificationRoutes);
 
 export default router;

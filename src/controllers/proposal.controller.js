@@ -130,10 +130,20 @@ export const getProposals = async (req, res, next) => {
       prisma.proposal.count({ where }),
       prisma.proposal.findMany({
         where,
-        include: {
-          lead: { select: { id: true, title: true, contactPerson: true, email: true, phone: true, status: true } },
-          client: { include: { company: { select: { name: true } } } },
-          createdBy: { select: { id: true, name: true, email: true } }
+        select: {
+          id: true,
+          proposalNumber: true,
+          title: true,
+          amount: true,
+          status: true,
+          validUntil: true,
+          createdAt: true,
+          requirements: true,
+          estimation: true,
+          quotation: true,
+          lead: {
+            select: { id: true, title: true, contactPerson: true, email: true, phone: true, requirements: true }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -159,10 +169,20 @@ export const getProposalById = async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const proposal = await prisma.proposal.findUnique({
       where: { id },
-      include: {
-        lead: true,
-        client: { include: { company: true } },
-        createdBy: { select: { id: true, name: true, email: true } },
+      select: {
+        id: true,
+        proposalNumber: true,
+        title: true,
+        amount: true,
+        status: true,
+        validUntil: true,
+        createdAt: true,
+        requirements: true,
+        estimation: true,
+        quotation: true,
+        lead: {
+          select: { id: true, title: true, contactPerson: true, email: true, phone: true }
+        },
         phases: {
           include: PHASE_INCLUDE,
           orderBy: { sortOrder: 'asc' }
@@ -275,7 +295,7 @@ export const createProposal = async (req, res, next) => {
     const [proposal] = await prisma.$transaction(transactionQueries);
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Proposal created successfully', proposal)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -358,7 +378,7 @@ export const updateProposal = async (req, res, next) => {
     }
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Proposal updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -377,7 +397,7 @@ export const deleteProposal = async (req, res, next) => {
     await prisma.proposal.delete({ where: { id } });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Proposal deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);

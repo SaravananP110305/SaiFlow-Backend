@@ -26,6 +26,8 @@ import {
   convertLeadSchema
 } from '../validators/lead.validator.js';
 
+import { bodyToQuery } from '../middlewares/bodyToQuery.middleware.js';
+
 const router = Router();
 
 router.use(isAuthenticated);
@@ -33,19 +35,19 @@ router.use(isAuthenticated);
 // Note: static/specialized routes must be registered before '/:id'
 
 // Aggregations & bulk operations
-router.get('/status-counts', requirePermission('leads', 'view'), getLeadStatusCounts);
-router.get('/export', requirePermission('leads', 'view'), exportLeads);
-router.post('/import', requirePermission('leads', 'create'), validate(importLeadsSchema), importLeads);
-router.post('/bulk-assign', requirePermission('leads', 'assign'), validate(bulkAssignSchema), bulkAssignLeads);
-router.post('/bulk-delete', requirePermission('leads', 'delete'), validate(bulkDeleteSchema), bulkDeleteLeads);
+router.post('/get-lead-status-counts', requirePermission('leads', 'view'), getLeadStatusCounts);
+router.post('/export-lead', requirePermission('leads', 'view'), bodyToQuery, exportLeads);
+router.post('/import-lead', requirePermission('leads', 'create'), validate(importLeadsSchema), importLeads);
+router.post('/bulk-assign-lead', requirePermission('leads', 'assign'), validate(bulkAssignSchema), bulkAssignLeads);
+router.post('/bulk-delete-lead', requirePermission('leads', 'delete'), validate(bulkDeleteSchema), bulkDeleteLeads);
 
 // Standard CRUD
-router.get('/', requirePermission('leads', 'view'), getLeads);
-router.get('/:id', requirePermission('leads', 'view'), getLeadById);
-router.post('/', requirePermission('leads', 'create'), validate(createLeadSchema), createLead);
-router.put('/:id', requirePermission('leads', 'edit'), validate(updateLeadSchema), updateLead);
-router.patch('/:id/assignment', requirePermission('leads', 'assign'), validate(assignLeadSchema), assignLead);
-router.post('/:id/convert', requirePermission('leads', 'edit'), validate(convertLeadSchema), convertLeadToClient);
-router.delete('/:id', requirePermission('leads', 'delete'), deleteLead);
+router.post('/get-lead', requirePermission('leads', 'view'), bodyToQuery, getLeads);
+router.get('/get-lead/:id', requirePermission('leads', 'view'), getLeadById);
+router.post('/create-lead', requirePermission('leads', 'create'), validate(createLeadSchema), createLead);
+router.put('/update-lead/:id', requirePermission('leads', 'edit'), validate(updateLeadSchema), updateLead);
+router.patch('/assign-lead/:id', requirePermission('leads', 'assign'), validate(assignLeadSchema), assignLead);
+router.post('/convert-lead/:id', requirePermission('leads', 'edit'), validate(convertLeadSchema), convertLeadToClient);
+router.delete('/delete-lead/:id', requirePermission('leads', 'delete'), deleteLead);
 
 export default router;

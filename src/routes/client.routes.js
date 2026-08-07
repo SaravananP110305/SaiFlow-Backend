@@ -19,20 +19,22 @@ import {
   updateProjectSchema
 } from '../validators/client.validator.js';
 
+import { bodyToQuery } from '../middlewares/bodyToQuery.middleware.js';
+
 const router = Router();
 
 router.use(isAuthenticated);
 
-// Client endpoints
-router.get('/', requirePermission('clients', 'view'), getClients);
-router.get('/:id', requirePermission('clients', 'view'), getClientById);
-router.post('/', requirePermission('clients', 'create'), validate(createClientSchema), createClient);
-router.put('/:id', requirePermission('clients', 'edit'), validate(updateClientSchema), updateClient);
-router.delete('/:id', requirePermission('clients', 'approve'), deleteClient);
+// Customer endpoints
+router.post('/get-customer', requirePermission('clients', 'view'), bodyToQuery, getClients);
+router.get('/get-customer/:id', requirePermission('clients', 'view'), getClientById);
+router.post('/create-customer', requirePermission('clients', 'create'), validate(createClientSchema), createClient);
+router.put('/update-customer/:id', requirePermission('clients', 'edit'), validate(updateClientSchema), updateClient);
+router.delete('/delete-customer/:id', requirePermission('clients', 'approve'), deleteClient);
 
 // Project Handover endpoints
-router.get('/projects', requirePermission('clients', 'view'), getProjects);
-router.post('/projects', requirePermission('clients', 'create'), validate(createProjectSchema), createProject);
-router.put('/projects/:id', requirePermission('clients', 'edit'), validate(updateProjectSchema), updateProject);
+router.post('/get-project', requirePermission('clients', 'view'), bodyToQuery, getProjects);
+router.post('/create-project', requirePermission('clients', 'create'), validate(createProjectSchema), createProject);
+router.put('/update-project/:id', requirePermission('clients', 'edit'), validate(updateProjectSchema), updateProject);
 
 export default router;

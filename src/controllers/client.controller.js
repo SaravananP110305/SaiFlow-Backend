@@ -80,30 +80,48 @@ export const getClientById = async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const client = await prisma.client.findFirst({
       where: { id, deletedAt: null },
-      include: {
+      select: {
+        id: true,
+        gstPan: true,
+        paymentTerms: true,
+        creditLimit: true,
+        createdAt: true,
+        status: true,
+        relationshipManagerId: true,
+        accountManagerId: true,
         company: {
-          include: {
-            industry: true,
-            country: true,
-            state: true,
-            city: true
+          select: {
+            id: true,
+            name: true,
+            website: true,
+            email: true,
+            phone: true,
+            address: true,
+            pincode: true,
+            industry: { select: { name: true } },
+            country: { select: { name: true } },
+            state: { select: { name: true } },
+            city: { select: { name: true } }
           }
         },
         lead: {
-          include: {
-            industry: true,
-            country: true,
-            state: true,
-            city: true,
-            source: true,
-            priority: true,
-            assignedTo: { select: { id: true, name: true, email: true } }
+          select: {
+            id: true,
+            contactPerson: true,
+            email: true,
+            phone: true,
+            designation: true
           }
         },
         relationshipManager: { select: { id: true, name: true } },
         accountManager: { select: { id: true, name: true } },
         projects: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            notes: true,
+            srsDocumentUrl: true,
             pm: { select: { id: true, name: true, email: true } }
           }
         }
@@ -183,7 +201,7 @@ export const createClient = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Client onboarding completed successfully', client)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -243,7 +261,7 @@ export const updateClient = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Client details updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -265,7 +283,7 @@ export const deleteClient = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Client deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);
@@ -298,9 +316,22 @@ export const getProjects = async (req, res, next) => {
       prisma.project.count({ where }),
       prisma.project.findMany({
         where,
-        include: {
-          client: { include: { company: true } },
-          pm: { select: { id: true, name: true, email: true } }
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          handoverDate: true,
+          targetDate: true,
+          kickoffDate: true,
+          notes: true,
+          srsDocumentUrl: true,
+          pm: { select: { id: true, name: true, email: true } },
+          client: {
+            select: {
+              id: true,
+              company: { select: { id: true, name: true } }
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -356,7 +387,7 @@ export const createProject = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Project handover created successfully', project)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -392,7 +423,7 @@ export const updateProject = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Project updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);

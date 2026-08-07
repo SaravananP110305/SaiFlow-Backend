@@ -122,9 +122,18 @@ export const getLeads = async (req, res, next) => {
       prisma.lead.count({ where }),
       prisma.lead.findMany({
         where,
-        include: {
-          ...leadInclude,
-          _count: { select: { meetings: true, proposals: true } }
+        select: {
+          id: true,
+          title: true,
+          contactPerson: true,
+          email: true,
+          phone: true,
+          status: true,
+          createdAt: true,
+          assignedToId: true,
+          source: { select: { name: true } },
+          priority: { select: { name: true } },
+          assignedTo: { select: { name: true } }
         },
         orderBy: { [sortBy]: sortOrder },
         skip,
@@ -286,7 +295,7 @@ export const createLead = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Lead created successfully', lead)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -425,7 +434,7 @@ export const updateLead = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Lead updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -519,7 +528,7 @@ export const deleteLead = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Lead deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);

@@ -21,19 +21,15 @@ const hashToken = (token) => {
 
 // Build a safe user payload without credentials and role permissions
 const buildUserPayload = (user) => {
-  const { passwordHash, refreshTokenHash, role, ...userData } = user;
-
-  const safeRole = role
-    ? {
-        id: role.id,
-        name: role.name,
-        status: role.status
-      }
-    : null;
-
   return {
-    ...userData,
-    role: safeRole
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    avatarUrl: user.avatarUrl,
+    status: user.status,
+    createdAt: user.createdAt,
+    role: user.role ? { name: user.role.name } : null
   };
 };
 
@@ -193,11 +189,6 @@ export const getPrivileges = async (req, res, next) => {
 
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'User privileges retrieved successfully', {
-        role: {
-          id: role.id,
-          name: role.name,
-          status: role.status
-        },
         permissions: role.permissions || {}
       })
     );

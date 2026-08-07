@@ -22,11 +22,9 @@ export const getCompanies = async (req, res, next) => {
       prisma.company.count({ where }),
       prisma.company.findMany({
         where,
-        include: {
-          industry: { select: { id: true, name: true } },
-          country: { select: { id: true, name: true } },
-          state: { select: { id: true, name: true } },
-          city: { select: { id: true, name: true } }
+        select: {
+          id: true,
+          name: true
         },
         orderBy: { name: 'asc' },
         skip,
@@ -52,11 +50,9 @@ export const getCompanyById = async (req, res, next) => {
     const id = parseInt(req.params.id, 10);
     const company = await prisma.company.findFirst({
       where: { id, deletedAt: null },
-      include: {
-        industry: true,
-        country: true,
-        state: true,
-        city: true
+      select: {
+        id: true,
+        name: true
       }
     });
 
@@ -96,7 +92,7 @@ export const createCompany = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Company created successfully', company)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully', { id: company.id })
     );
   } catch (error) {
     next(error);
@@ -131,7 +127,7 @@ export const updateCompany = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Company updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -153,7 +149,7 @@ export const deleteCompany = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Company deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);

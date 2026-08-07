@@ -19,7 +19,7 @@ const router = Router();
 router.post('/login', validate(loginSchema), login);
 router.put('/refresh', refresh);
 router.delete('/logout', isAuthenticated, logout);
-router.get('/me', isAuthenticated, getMe);
+router.get('/profile', isAuthenticated, getMe);
 router.get('/privileges', isAuthenticated, getPrivileges);
 router.patch('/profile/photo', isAuthenticated, uploadAvatar.single('photo'), uploadProfilePhoto);
 router.patch('/profile', isAuthenticated, validate(updateProfileSchema), updateProfile);

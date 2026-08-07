@@ -38,7 +38,9 @@ export const getRoles = async (req, res, next) => {
       ]);
 
       const data = roles.map((role) => ({
-        ...role,
+        id: role.id,
+        name: role.name,
+        status: role.status,
         userCount: role._count.users
       }));
 
@@ -63,7 +65,9 @@ export const getRoles = async (req, res, next) => {
     });
 
     const data = roles.map((role) => ({
-      ...role,
+      id: role.id,
+      name: role.name,
+      status: role.status,
       userCount: role._count.users
     }));
 
@@ -93,8 +97,10 @@ export const getRoleById = async (req, res, next) => {
 
     res.status(StatusCodes.OK).json(
       new ApiResponse(StatusCodes.OK, 'Role retrieved successfully', {
-        ...role,
-        userCount: role._count.users
+        id: role.id,
+        name: role.name,
+        status: role.status,
+        permissions: role.permissions || {}
       })
     );
   } catch (error) {
@@ -135,7 +141,7 @@ export const createRole = async (req, res, next) => {
     }
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Role created successfully', role)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -174,7 +180,7 @@ export const updateRole = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Role updated successfully', updatedRole)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -213,7 +219,7 @@ export const deleteRole = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Role deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);

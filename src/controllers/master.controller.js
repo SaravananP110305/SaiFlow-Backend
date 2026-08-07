@@ -23,7 +23,12 @@ export const getMasterItems = async (req, res, next) => {
         prisma.masterItem.count({ where }),
         prisma.masterItem.findMany({
           where,
-          include: {
+          select: {
+            id: true,
+            category: true,
+            name: true,
+            status: true,
+            parentId: true,
             parent: { select: { id: true, name: true, category: true } }
           },
           orderBy: { name: 'asc' },
@@ -44,7 +49,12 @@ export const getMasterItems = async (req, res, next) => {
 
     const items = await prisma.masterItem.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        category: true,
+        name: true,
+        status: true,
+        parentId: true,
         parent: { select: { id: true, name: true, category: true } }
       },
       orderBy: { name: 'asc' }
@@ -63,9 +73,13 @@ export const getMasterItemById = async (req, res, next) => {
     const itemId = parseInt(req.params.id, 10);
     const item = await prisma.masterItem.findUnique({
       where: { id: itemId },
-      include: {
-        parent: { select: { id: true, name: true, category: true } },
-        children: { select: { id: true, name: true, status: true } }
+      select: {
+        id: true,
+        category: true,
+        name: true,
+        status: true,
+        parentId: true,
+        parent: { select: { id: true, name: true, category: true } }
       }
     });
 
@@ -102,7 +116,7 @@ export const createMasterItem = async (req, res, next) => {
     });
 
     res.status(StatusCodes.CREATED).json(
-      new ApiResponse(StatusCodes.CREATED, 'Master item created successfully', item)
+      new ApiResponse(StatusCodes.CREATED, 'Created successfully')
     );
   } catch (error) {
     next(error);
@@ -136,7 +150,7 @@ export const updateMasterItem = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Master item updated successfully', updated)
+      new ApiResponse(StatusCodes.OK, 'Updated successfully')
     );
   } catch (error) {
     next(error);
@@ -170,7 +184,7 @@ export const deleteMasterItem = async (req, res, next) => {
     });
 
     res.status(StatusCodes.OK).json(
-      new ApiResponse(StatusCodes.OK, 'Master item deleted successfully')
+      new ApiResponse(StatusCodes.OK, 'Deleted successfully')
     );
   } catch (error) {
     next(error);
