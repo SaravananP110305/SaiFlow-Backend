@@ -18,8 +18,15 @@ export const getUsers = async (req, res, next) => {
       ...(roleId && { roleId: parseInt(roleId, 10) }),
       ...(search && {
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { name: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } }
+          { email: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } },
+          { department: { contains: search, mode: 'insensitive' } },
+          ...(['ACTIVE', 'INACTIVE', 'SUSPENDED'].includes(String(search).trim().toUpperCase())
+            ? [{ status: String(search).trim().toUpperCase() }]
+            : []),
+          { role: { name: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };

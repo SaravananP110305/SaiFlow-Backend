@@ -20,6 +20,17 @@ const parseId = (value) => parseInt(value, 10);
 
 const getIp = (req) => req.ip || req.socket?.remoteAddress || null;
 
+// Adds a numeric id match to the OR clause when the search string is numeric.
+const searchClause = (search, clauses) => {
+  const numeric = Number(search);
+  return {
+    OR: [
+      ...(Number.isInteger(numeric) ? [{ id: numeric }] : []),
+      ...clauses
+    ]
+  };
+};
+
 const getSort = (req) => {
   const sortBy = ALLOWED_SORT_FIELDS.includes(req.query.sortBy) ? req.query.sortBy : 'createdAt';
   const sortOrder = req.query.sortOrder === 'asc' ? 'asc' : 'desc';
@@ -49,14 +60,28 @@ const buildLeadWhere = (req) => {
         ...(createdTo && { lte: new Date(createdTo) })
       }
     }),
-    ...(search && {
-      OR: [
-        { title: { contains: search, mode: 'insensitive' } },
-        { contactPerson: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } }
-      ]
-    })
+    ...(search && searchClause(search, [
+      { title: { contains: search, mode: 'insensitive' } },
+      { contactPerson: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { phone: { contains: search, mode: 'insensitive' } },
+      { designation: { contains: search, mode: 'insensitive' } },
+      { alternatePhone: { contains: search, mode: 'insensitive' } },
+      { alternateEmail: { contains: search, mode: 'insensitive' } },
+      { website: { contains: search, mode: 'insensitive' } },
+      { companyType: { contains: search, mode: 'insensitive' } },
+      { address: { contains: search, mode: 'insensitive' } },
+      { pincode: { contains: search, mode: 'insensitive' } },
+      { requirements: { contains: search, mode: 'insensitive' } },
+      ...(normalizeLeadStatus(search) ? [{ status: normalizeLeadStatus(search) }] : []),
+      { assignedTo: { name: { contains: search, mode: 'insensitive' } } },
+      { source: { name: { contains: search, mode: 'insensitive' } } },
+      { priority: { name: { contains: search, mode: 'insensitive' } } },
+      { industry: { name: { contains: search, mode: 'insensitive' } } },
+      { country: { name: { contains: search, mode: 'insensitive' } } },
+      { state: { name: { contains: search, mode: 'insensitive' } } },
+      { city: { name: { contains: search, mode: 'insensitive' } } }
+    ]))
   };
 
   // Non-manager roles only see the leads assigned to them.

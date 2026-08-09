@@ -11,7 +11,15 @@ export const getMasterItems = async (req, res, next) => {
       ...(category && { category }),
       ...(parentId !== undefined && { parentId: parentId === 'null' ? null : parseInt(parentId, 10) }),
       ...(status && { status }),
-      ...(search && { name: { contains: search, mode: 'insensitive' } })
+      ...(search && {
+        OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
+          { name: { contains: search, mode: 'insensitive' } },
+          { category: { contains: search, mode: 'insensitive' } },
+          { status: { contains: search, mode: 'insensitive' } },
+          { parent: { name: { contains: search, mode: 'insensitive' } } }
+        ]
+      })
     };
 
     if (paginate === 'true') {

@@ -11,6 +11,7 @@ export const getRoles = async (req, res, next) => {
       deletedAt: null,
       ...(search && {
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { name: { contains: search, mode: 'insensitive' } },
           { status: { contains: search, mode: 'insensitive' } }
         ]

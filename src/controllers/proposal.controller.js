@@ -117,11 +117,18 @@ export const getProposals = async (req, res, next) => {
       ...(createdById && { createdById: parseInt(createdById, 10) }),
       ...(search && {
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { title: { contains: search, mode: 'insensitive' } },
           { proposalNumber: { contains: search, mode: 'insensitive' } },
+          { status: { contains: search, mode: 'insensitive' } },
+          { lead: { id: Number.isInteger(Number(search)) ? Number(search) : -1 } },
           { lead: { title: { contains: search, mode: 'insensitive' } } },
           { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-          { client: { company: { name: { contains: search, mode: 'insensitive' } } } }
+          { lead: { email: { contains: search, mode: 'insensitive' } } },
+          { lead: { phone: { contains: search, mode: 'insensitive' } } },
+          { client: { company: { name: { contains: search, mode: 'insensitive' } } } },
+          { client: { lead: { contactPerson: { contains: search, mode: 'insensitive' } } } },
+          { createdBy: { name: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };

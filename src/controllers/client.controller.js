@@ -16,10 +16,25 @@ export const getClients = async (req, res, next) => {
       ...(status && { status }),
       ...(search && {
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { company: { name: { contains: search, mode: 'insensitive' } } },
+          { company: { website: { contains: search, mode: 'insensitive' } } },
+          { company: { email: { contains: search, mode: 'insensitive' } } },
+          { company: { phone: { contains: search, mode: 'insensitive' } } },
+          { company: { address: { contains: search, mode: 'insensitive' } } },
+          { company: { pincode: { contains: search, mode: 'insensitive' } } },
+          { company: { companyType: { contains: search, mode: 'insensitive' } } },
+          { company: { industry: { name: { contains: search, mode: 'insensitive' } } } },
+          { lead: { title: { contains: search, mode: 'insensitive' } } },
           { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
           { lead: { email: { contains: search, mode: 'insensitive' } } },
-          { lead: { phone: { contains: search, mode: 'insensitive' } } }
+          { lead: { phone: { contains: search, mode: 'insensitive' } } },
+          { gstPan: { contains: search, mode: 'insensitive' } },
+          { panNumber: { contains: search, mode: 'insensitive' } },
+          { status: { contains: search, mode: 'insensitive' } },
+          { paymentTerms: { contains: search, mode: 'insensitive' } },
+          { relationshipManager: { name: { contains: search, mode: 'insensitive' } } },
+          { accountManager: { name: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };
@@ -306,8 +321,13 @@ export const getProjects = async (req, res, next) => {
       ...(status && { status }),
       ...(search && {
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { name: { contains: search, mode: 'insensitive' } },
-          { client: { company: { name: { contains: search, mode: 'insensitive' } } } }
+          { client: { company: { name: { contains: search, mode: 'insensitive' } } } },
+          { client: { lead: { contactPerson: { contains: search, mode: 'insensitive' } } } },
+          { pm: { name: { contains: search, mode: 'insensitive' } } },
+          { status: { contains: search, mode: 'insensitive' } },
+          { notes: { contains: search, mode: 'insensitive' } }
         ]
       })
     };

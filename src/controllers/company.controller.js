@@ -14,7 +14,20 @@ export const getCompanies = async (req, res, next) => {
       deletedAt: null,
       ...(industryId && { industryId: parseInt(industryId, 10) }),
       ...(search && {
-        name: { contains: search, mode: 'insensitive' }
+        OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
+          { name: { contains: search, mode: 'insensitive' } },
+          { website: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } },
+          { address: { contains: search, mode: 'insensitive' } },
+          { pincode: { contains: search, mode: 'insensitive' } },
+          { companyType: { contains: search, mode: 'insensitive' } },
+          { industry: { name: { contains: search, mode: 'insensitive' } } },
+          { country: { name: { contains: search, mode: 'insensitive' } } },
+          { state: { name: { contains: search, mode: 'insensitive' } } },
+          { city: { name: { contains: search, mode: 'insensitive' } } }
+        ]
       })
     };
 

@@ -64,10 +64,18 @@ export const getConnects = async (req, res, next) => {
       where.AND = [
         {
           OR: [
+            { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
+            { leadId: Number.isInteger(Number(search)) ? Number(search) : -1 },
             { company: { contains: search, mode: 'insensitive' } },
             { contactPerson: { contains: search, mode: 'insensitive' } },
+            { phone: { contains: search, mode: 'insensitive' } },
             { assignedTo: { contains: search, mode: 'insensitive' } },
-            { summary: { contains: search, mode: 'insensitive' } }
+            { summary: { contains: search, mode: 'insensitive' } },
+            { outcome: { contains: search, mode: 'insensitive' } },
+            { followUpType: { contains: search, mode: 'insensitive' } },
+            { followUpDate: { contains: search, mode: 'insensitive' } },
+            { followUpTime: { contains: search, mode: 'insensitive' } },
+            { status: { contains: search, mode: 'insensitive' } }
           ]
         }
       ];

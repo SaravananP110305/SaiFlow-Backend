@@ -262,10 +262,27 @@ export const getLeadReport = async (req, res, next) => {
     }
     if (search) {
       where.OR = [
+        { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
         { title: { contains: search, mode: 'insensitive' } },
         { contactPerson: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } }
+        { phone: { contains: search, mode: 'insensitive' } },
+        { designation: { contains: search, mode: 'insensitive' } },
+        { alternatePhone: { contains: search, mode: 'insensitive' } },
+        { alternateEmail: { contains: search, mode: 'insensitive' } },
+        { website: { contains: search, mode: 'insensitive' } },
+        { companyType: { contains: search, mode: 'insensitive' } },
+        { address: { contains: search, mode: 'insensitive' } },
+        { pincode: { contains: search, mode: 'insensitive' } },
+        { requirements: { contains: search, mode: 'insensitive' } },
+        ...(normalizeLeadStatus(search) ? [{ status: normalizeLeadStatus(search) }] : []),
+        { assignedTo: { name: { contains: search, mode: 'insensitive' } } },
+        { source: { name: { contains: search, mode: 'insensitive' } } },
+        { priority: { name: { contains: search, mode: 'insensitive' } } },
+        { industry: { name: { contains: search, mode: 'insensitive' } } },
+        { country: { name: { contains: search, mode: 'insensitive' } } },
+        { state: { name: { contains: search, mode: 'insensitive' } } },
+        { city: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
     // Keep parity with the leads list endpoint: non-managers only see their own leads.
@@ -350,9 +367,19 @@ export const getMeetingReport = async (req, res, next) => {
     }
     if (search) {
       where.OR = [
+        { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
         { title: { contains: search, mode: 'insensitive' } },
+        { agenda: { contains: search, mode: 'insensitive' } },
+        { scopeNotes: { contains: search, mode: 'insensitive' } },
+        { actionSummary: { contains: search, mode: 'insensitive' } },
+        ...(normalizeMeetingStatus(search) ? [{ status: normalizeMeetingStatus(search) }] : []),
+        ...(normalizeLeadStatus(search) ? [{ lead: { status: normalizeLeadStatus(search) } }] : []),
+        { lead: { id: Number.isInteger(Number(search)) ? Number(search) : -1 } },
         { lead: { title: { contains: search, mode: 'insensitive' } } },
-        { lead: { contactPerson: { contains: search, mode: 'insensitive' } } }
+        { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
+        { lead: { email: { contains: search, mode: 'insensitive' } } },
+        { lead: { phone: { contains: search, mode: 'insensitive' } } },
+        { createdBy: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
 
@@ -423,8 +450,14 @@ export const getEmployeeReport = async (req, res, next) => {
     if (search) {
       andConditions.push({
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { name: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } },
+          { department: { contains: search, mode: 'insensitive' } },
+          ...(USER_STATUS_MAP[String(search).trim().toUpperCase()]
+            ? [{ status: USER_STATUS_MAP[String(search).trim().toUpperCase()] }]
+            : []),
           { role: { name: { contains: search, mode: 'insensitive' } } }
         ]
       });
@@ -533,10 +566,25 @@ export const getClientReport = async (req, res, next) => {
     }
     if (search) {
       where.OR = [
+        { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
         { company: { name: { contains: search, mode: 'insensitive' } } },
+        { company: { website: { contains: search, mode: 'insensitive' } } },
         { company: { email: { contains: search, mode: 'insensitive' } } },
+        { company: { phone: { contains: search, mode: 'insensitive' } } },
+        { company: { address: { contains: search, mode: 'insensitive' } } },
+        { company: { pincode: { contains: search, mode: 'insensitive' } } },
+        { company: { companyType: { contains: search, mode: 'insensitive' } } },
+        { company: { industry: { name: { contains: search, mode: 'insensitive' } } } },
+        { lead: { title: { contains: search, mode: 'insensitive' } } },
         { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-        { lead: { email: { contains: search, mode: 'insensitive' } } }
+        { lead: { email: { contains: search, mode: 'insensitive' } } },
+        { lead: { phone: { contains: search, mode: 'insensitive' } } },
+        { gstPan: { contains: search, mode: 'insensitive' } },
+        { panNumber: { contains: search, mode: 'insensitive' } },
+        { status: { contains: search, mode: 'insensitive' } },
+        { paymentTerms: { contains: search, mode: 'insensitive' } },
+        { relationshipManager: { name: { contains: search, mode: 'insensitive' } } },
+        { accountManager: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
 
@@ -611,11 +659,18 @@ export const getProposalReport = async (req, res, next) => {
     if (status) where.status = status;
     if (search) {
       where.OR = [
+        { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
         { proposalNumber: { contains: search, mode: 'insensitive' } },
         { title: { contains: search, mode: 'insensitive' } },
+        { status: { contains: search, mode: 'insensitive' } },
+        { lead: { id: Number.isInteger(Number(search)) ? Number(search) : -1 } },
         { lead: { title: { contains: search, mode: 'insensitive' } } },
         { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
-        { lead: { email: { contains: search, mode: 'insensitive' } } }
+        { lead: { email: { contains: search, mode: 'insensitive' } } },
+        { lead: { phone: { contains: search, mode: 'insensitive' } } },
+        { client: { company: { name: { contains: search, mode: 'insensitive' } } } },
+        { client: { lead: { contactPerson: { contains: search, mode: 'insensitive' } } } },
+        { createdBy: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
 
@@ -687,10 +742,18 @@ export const getFollowUpReport = async (req, res, next) => {
     if (search) {
       andConditions.push({
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
+          { leadId: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { company: { contains: search, mode: 'insensitive' } },
           { contactPerson: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } },
+          { assignedTo: { contains: search, mode: 'insensitive' } },
           { outcome: { contains: search, mode: 'insensitive' } },
-          { summary: { contains: search, mode: 'insensitive' } }
+          { summary: { contains: search, mode: 'insensitive' } },
+          { followUpType: { contains: search, mode: 'insensitive' } },
+          { followUpDate: { contains: search, mode: 'insensitive' } },
+          { followUpTime: { contains: search, mode: 'insensitive' } },
+          { status: { contains: search, mode: 'insensitive' } }
         ]
       });
     }

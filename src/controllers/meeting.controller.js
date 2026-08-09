@@ -2,6 +2,13 @@ import { StatusCodes } from 'http-status-codes';
 import prisma from '../config/prisma.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
+import { normalizeLeadStatus } from '../constants/lead.constants.js';
+
+const MEETING_STATUSES = ['SCHEDULED', 'COMPLETED', 'RESCHEDULED', 'CANCELLED'];
+const normalizeMeetingStatus = (value) => {
+  const normalized = String(value || '').trim().toUpperCase();
+  return MEETING_STATUSES.includes(normalized) ? normalized : null;
+};
 
 export const getMeetings = async (req, res, next) => {
   try {
@@ -23,9 +30,20 @@ export const getMeetings = async (req, res, next) => {
       }),
       ...(search && {
         OR: [
+          { id: Number.isInteger(Number(search)) ? Number(search) : -1 },
           { title: { contains: search, mode: 'insensitive' } },
+          { meetingLink: { contains: search, mode: 'insensitive' } },
+          { agenda: { contains: search, mode: 'insensitive' } },
+          { scopeNotes: { contains: search, mode: 'insensitive' } },
+          { actionSummary: { contains: search, mode: 'insensitive' } },
+          ...(normalizeMeetingStatus(search) ? [{ status: normalizeMeetingStatus(search) }] : []),
+          ...(normalizeLeadStatus(search) ? [{ lead: { status: normalizeLeadStatus(search) } }] : []),
+          { lead: { id: Number.isInteger(Number(search)) ? Number(search) : -1 } },
           { lead: { title: { contains: search, mode: 'insensitive' } } },
-          { lead: { contactPerson: { contains: search, mode: 'insensitive' } } }
+          { lead: { contactPerson: { contains: search, mode: 'insensitive' } } },
+          { lead: { email: { contains: search, mode: 'insensitive' } } },
+          { lead: { phone: { contains: search, mode: 'insensitive' } } },
+          { createdBy: { name: { contains: search, mode: 'insensitive' } } }
         ]
       })
     };
