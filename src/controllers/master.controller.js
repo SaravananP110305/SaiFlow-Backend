@@ -22,7 +22,7 @@ export const getMasterItems = async (req, res, next) => {
       })
     };
 
-    if (paginate === 'true') {
+    if (paginate === 'true' || paginate === true) {
       const pageNum = parseInt(page, 10);
       const limitNum = parseInt(limit, 10);
       const skip = (pageNum - 1) * limitNum;
